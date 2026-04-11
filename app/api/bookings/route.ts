@@ -2,13 +2,11 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/database/db";
 import { ObjectId } from "mongodb";
 import { sendBookingNotification } from "@/lib/mail";
-import { auth } from "@clerk/nextjs/server";
-import { cookies } from "next/headers";
-import { jwtVerify } from "jose";
+import { getAuthUser } from "@/lib/auth";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-export const dynamic = "force-dynamic";
+import { withCache, invalidateCache } from "@/lib/api/cache";
 
 export async function GET(request: Request) {
   if (!JWT_SECRET) return NextResponse.json({message:'Server config error'},{status:500});
@@ -18,50 +16,62 @@ export async function GET(request: Request) {
     const userEmail = searchParams.get("userEmail");
     const userId = searchParams.get("userId");
     const userPhone = searchParams.get("userPhone");
+    const date = searchParams.get("date");
 
     if (!monkId && !userEmail && !userId && !userPhone) {
       return NextResponse.json({ message: "Missing search parameter" }, { status: 400 });
     }
 
-    const { db } = await connectToDatabase();
-    const query: any = {};
+    const cacheKey = `bookings:${monkId || 'all'}:${date || 'all'}:${userId || 'all'}:${userEmail || 'all'}:${userPhone || 'all'}`;
+    const ttl = monkId ? 30 : 60; // Shorter TTL for schedule freshness
 
-    if (monkId) query.monkId = monkId;
-    if (userEmail) query.userEmail = userEmail;
-    if (userPhone) query.userPhone = userPhone;
-    
-    if (userId) {
+    const { bookings, times } = await withCache(cacheKey, async () => {
       const { db } = await connectToDatabase();
-      // Parallelize user lookup
-      const userIdsToSearch = [userId];
-      const lookupResult = await (async () => {
-        try {
-          if (ObjectId.isValid(userId)) {
-            return await db.collection("users").findOne({ _id: new ObjectId(userId) });
-          } else if (userId.startsWith("user_")) {
-            return await db.collection("users").findOne({ clerkId: userId });
-          }
-        } catch { return null; }
-        return null;
-      })();
+      const query: any = {};
 
-      if (lookupResult) {
-        if (lookupResult.clerkId) userIdsToSearch.push(lookupResult.clerkId);
-        userIdsToSearch.push(lookupResult._id.toString());
+      if (monkId) query.monkId = monkId;
+      if (userEmail) query.userEmail = userEmail;
+      if (userPhone) query.userPhone = userPhone;
+      
+      if (userId) {
+        // Parallelize user lookup
+        const userIdsToSearch = [userId];
+        const lookupResult = await (async () => {
+          try {
+            if (ObjectId.isValid(userId)) {
+              return await db.collection("users").findOne({ _id: new ObjectId(userId) });
+            } else if (userId.startsWith("user_")) {
+              return await db.collection("users").findOne({ clerkId: userId });
+            }
+          } catch { return null; }
+          return null;
+        })();
+
+        if (lookupResult) {
+          if (lookupResult.clerkId) userIdsToSearch.push(lookupResult.clerkId);
+          userIdsToSearch.push(lookupResult._id.toString());
+        }
+        query.$or = [{ userId: { $in: userIdsToSearch } }, { clientId: { $in: userIdsToSearch } }];
       }
-      query.$or = [{ userId: { $in: userIdsToSearch } }, { clientId: { $in: userIdsToSearch } }];
-    }
 
-    if (searchParams.get("date")) query.date = searchParams.get("date");
+      if (date) query.date = date;
 
-    const bookings = await db.collection("bookings")
-      .find(query)
-      .sort({ date: 1, time: 1 })
-      .limit(100)
-      .toArray();
+      const results = await db.collection("bookings")
+        .find(query)
+        .sort({ date: 1, time: 1 })
+        .limit(100)
+        .toArray();
 
-    if (monkId && searchParams.get("date")) {
-      return NextResponse.json(bookings.filter(b => b.status !== 'rejected' && b.status !== 'cancelled').map(b => b.time));
+      let timesResult = null;
+      if (monkId && date) {
+        timesResult = results.filter(b => b.status !== 'rejected' && b.status !== 'cancelled').map(b => b.time);
+      }
+
+      return { bookings: results, times: timesResult };
+    }, ttl);
+
+    if (monkId && date) {
+      return NextResponse.json(times);
     }
 
     return NextResponse.json(bookings);
@@ -71,28 +81,11 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  if (!JWT_SECRET) return NextResponse.json({message:'Server config error'},{status:500});
   try {
-    let authenticatedUserId = null;
-    const { userId: clerkUserId } = await auth();
-    authenticatedUserId = clerkUserId;
+    const user = await getAuthUser(request);
+    if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-    if (!authenticatedUserId) {
-      const cookieStore = await cookies();
-      const token = cookieStore.get("auth_token")?.value;
-      const authHeader = request.headers.get("Authorization");
-      const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : null;
-      const effectiveToken = token || bearerToken;
-
-      if (effectiveToken) {
-        try {
-          const { payload } = await jwtVerify(effectiveToken, new TextEncoder().encode(JWT_SECRET));
-          authenticatedUserId = payload.sub as string;
-        } catch (e) {}
-      }
-    }
-
-    if (!authenticatedUserId) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    const authenticatedUserId = user.dbId;
 
     const body = await request.json();
     const { monkId, date, time, userName, userEmail, userPhone, serviceId, note } = body;
@@ -188,6 +181,8 @@ export async function POST(request: Request) {
     ]);
 
     if (lockId) await db.collection('booking_locks').deleteOne({ _id: lockId });
+
+    await invalidateCache('bookings:*');
 
     return NextResponse.json({ success: true, id: result.insertedId });
   } catch (error: any) {

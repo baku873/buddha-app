@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useRef } from "react";
+import toast from "react-hot-toast";
 import { useAuth } from "./AuthContext";
 import type { Notification as DBNotification, Booking } from "@/database/types";
 import { fetchWithFallback } from "@/lib/fetchWithFallback";
@@ -137,24 +138,31 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
     if (Notification.permission === "granted") {
       new window.Notification(title.en, { body: message.en });
     } else {
-      alert(title.mn);
+      toast(title.mn, { icon: '🔔', duration: 8000 });
     }
   };
 
   useEffect(() => {
     if (user) {
       fetchNotifications();
-      const interval = setInterval(fetchNotifications, 60000); // Poll every minute
-      const reminderInterval = setInterval(checkUpcomingBookings, 30000); // Check reminders every 30s
       
-      // Request notification permission
+      // Consolidate into one 30s polling interval for both notifications and reminders
+      const interval = setInterval(() => {
+        fetchNotifications();
+        checkUpcomingBookings();
+      }, 30000);
+      
+      // Request notification permission after 30s delay if still default
       if (typeof window !== 'undefined' && "Notification" in window) {
-        window.Notification.requestPermission();
+        setTimeout(() => {
+          if (window.Notification.permission === 'default') {
+            window.Notification.requestPermission();
+          }
+        }, 30000);
       }
 
       return () => {
         clearInterval(interval);
-        clearInterval(reminderInterval);
       };
     }
   }, [user]);

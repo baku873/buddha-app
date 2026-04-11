@@ -12,12 +12,17 @@ import {
     TrendingUp,
     Phone
 } from "lucide-react";
-import { useLanguage } from "../../contexts/LanguageContext";
 import LiveRitualRoom from "../../components/LiveRitualRoom";
 import ChatWindow from "../../components/ChatWindow";
 import BookingDetailModal from "../admin/BookingDetailModal";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "../../contexts/LanguageContext";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+
+const DashboardStats = dynamic(() => import('./DashboardStats'), { loading: () => <div className="h-40 animate-pulse bg-stone/20 rounded-3xl" /> });
+const DashboardSchedule = dynamic(() => import('./DashboardSchedule'), { loading: () => <div className="h-64 animate-pulse bg-stone/20 rounded-3xl" /> });
+const DashboardBookings = dynamic(() => import('./DashboardBookings'), { loading: () => <div className="h-64 animate-pulse bg-stone/20 rounded-3xl" /> });
 
 // --- TYPES ---
 interface ServiceItem {
@@ -382,9 +387,11 @@ export default function DashboardPage() {
                             return;
                         }
 
-                        const bRes = await fetch(`/api/bookings?userId=${profileData._id}`);
+                        const [bRes, allMonksRes] = await Promise.all([
+                            fetch(`/api/bookings?userId=${profileData._id}`),
+                            fetch('/api/monks')
+                        ]);
                         if (bRes.ok) currentBookings = await bRes.json();
-                        const allMonksRes = await fetch('/api/monks');
                         if (allMonksRes.ok) setAllMonks(await allMonksRes.json());
                     }
                     setBookings(currentBookings);
@@ -407,10 +414,10 @@ export default function DashboardPage() {
                 setLoading(false);
             }
         }
+            // Removed sequential await and 8s polling logic here, 
+            // since we'll rely on Ably WebSockets or less aggressive updates.
         if (!authLoading && user) {
             fetchData();
-            const pollInterval = setInterval(fetchData, 8000);
-            return () => clearInterval(pollInterval);
         }
     }, [authLoading, user]);
 
@@ -712,349 +719,54 @@ export default function DashboardPage() {
                 <section className="container mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
                     <div className="lg:col-span-2 space-y-8">
                         {isMonk && (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="monastery-card p-8 flex items-center gap-6 bg-white group hover:border-gold/30 transition-colors">
-                                    <div className="w-16 h-16 rounded-2xl bg-gold/5 flex items-center justify-center text-gold group-hover:bg-gold/10 transition-colors">
-                                        <TrendingUp size={30} />
-                                    </div>
-                                    <div>
-                                        <p className="text-label text-earth/60 mb-2">{TEXT.earnings}</p>
-                                        <h3 className="text-price text-2xl text-ink font-black">{totalEarnings.toLocaleString()}₮</h3>
-                                    </div>
-                                </div>
-                                <div className="monastery-card p-8 flex items-center gap-6 bg-white group hover:border-gold/30 transition-colors">
-                                    <div className="w-16 h-16 rounded-2xl bg-gold/5 flex items-center justify-center text-gold group-hover:bg-gold/10 transition-colors">
-                                        <CheckCircle size={30} />
-                                    </div>
-                                    <div>
-                                        <p className="text-label text-earth/60 mb-2">{TEXT.acceptedBookings}</p>
-                                        <h3 className="text-h2 text-2xl text-ink font-black">{acceptedCount}</h3>
-                                    </div>
-                                </div>
-                                {profile?.isSpecial !== true && (
-                                    <div className="monastery-card p-8 flex items-center gap-6 bg-white group hover:border-gold/30 transition-colors">
-                                        <div className="w-16 h-16 rounded-2xl bg-gold/5 flex items-center justify-center text-gold group-hover:bg-gold/10 transition-colors">
-                                            <ShieldCheck size={30} />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">{language === 'mn' ? "Тусгай сан" : "Special Fund"}</p>
-                                            <h3 className="text-3xl font-serif font-bold text-[#451a03]">{(acceptedCount * 10000).toLocaleString()}₮</h3>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                            <DashboardStats 
+                                isSpecial={profile?.isSpecial || false}
+                                totalEarnings={totalEarnings}
+                                acceptedCount={acceptedCount}
+                                language={language}
+                                TEXT={TEXT}
+                            />
                         )}
 
                         {isMonk && (
-                            <div className="monastery-card p-10 bg-white/80 backdrop-blur-md">
-                                <div className="flex justify-between items-center mb-10 border-b border-border pb-6">
-                                    <h2 className="text-display flex items-center gap-4"><Clock className="text-gold" /> {TEXT.availability}</h2>
-                                    <button onClick={saveScheduleSettings} disabled={isSaving} className="cta-button h-12 px-6 shadow-gold group">
-                                        {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} className="mr-2" />} 
-                                        <span className="text-xs uppercase tracking-widest">{TEXT.updateBtn}</span>
-                                    </button>
-                                </div>
-
-                                {/* STEP 1: WEEKLY HOURS */}
-                                <div className="mb-14">
-                                    <div className="mb-8 flex items-center gap-4">
-                                        <div className="w-8 h-8 rounded-full bg-gold text-white flex items-center justify-center text-xs font-black shadow-gold">1</div>
-                                        <div>
-                                            <h3 className="text-h2 text-ink">{TEXT.step1}</h3>
-                                            <p className="text-label text-earth/50 lowercase mt-0.5">{TEXT.step1Desc}</p>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-6">
-                                        {DAYS_EN.map((day, idx) => {
-                                            const config = schedule.find(s => s.day === day) || { day, start: "00:00", end: "24:00", active: false, slots: [] };
-                                            return (
-                                                <div key={day} className={`p-6 rounded-[2rem] border transition-design ${config.active ? 'bg-stone/20 border-gold/10' : 'bg-transparent border-border opacity-40'}`}>
-                                                    <div className="flex items-center gap-4 mb-5">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={config.active}
-                                                            onChange={(e) => {
-                                                                const newSchedule = [...schedule];
-                                                                const dayIdx = newSchedule.findIndex(s => s.day === day);
-                                                                if (dayIdx > -1) {
-                                                                    newSchedule[dayIdx].active = e.target.checked;
-                                                                    if (e.target.checked && (!newSchedule[dayIdx].slots || newSchedule[dayIdx].slots?.length === 0)) {
-                                                                        newSchedule[dayIdx].slots = ALL_24_SLOTS;
-                                                                    }
-                                                                } else {
-                                                                    newSchedule.push({ day, start: "00:00", end: "24:00", active: e.target.checked, slots: ALL_24_SLOTS });
-                                                                }
-                                                                setSchedule(newSchedule);
-                                                            }}
-                                                            className="w-6 h-6 rounded-lg accent-gold cursor-pointer"
-                                                        />
-                                                        <span className="text-h2 text-ink">{DAYS_MN[idx]}</span>
-                                                    </div>
-
-                                                    {config.active && (
-                                                        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
-                                                            {ALL_24_SLOTS.map((time) => {
-                                                                const isAvailable = config.slots?.includes(time);
-                                                                return (
-                                                                    <button
-                                                                        key={time}
-                                                                        onClick={() => toggleWeeklySlot(day, time)}
-                                                                        className={`py-2 px-1 rounded-xl border font-black text-[10px] transition-design ${isAvailable
-                                                                            ? 'bg-gold border-gold text-white shadow-sm'
-                                                                            : 'bg-white border-border text-earth/40 line-through'
-                                                                            }`}
-                                                                    >
-                                                                        {time}
-                                                                    </button>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
-                                {/* STEP 2: EXCEPTIONS */}
-                                <div>
-                                    <div className="mb-8 flex items-center gap-4">
-                                        <div className="w-8 h-8 rounded-full bg-gold text-white flex items-center justify-center text-xs font-black shadow-gold">2</div>
-                                        <div>
-                                            <h3 className="text-h2 text-ink">{TEXT.step2}</h3>
-                                            <p className="text-label text-earth/50 lowercase mt-0.5">{TEXT.step2Desc}</p>
-                                        </div>
-                                    </div>
-                                    <div className="bg-stone/30 rounded-[2.5rem] p-8 border border-border">
-                                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-                                            <div className="relative group">
-                                                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gold group-focus-within:scale-110 transition-transform" size={18} />
-                                                <input
-                                                    type="date"
-                                                    value={selectedBlockDate}
-                                                    min={new Date().toISOString().split('T')[0]}
-                                                    onChange={(e) => setSelectedBlockDate(e.target.value)}
-                                                    className="pl-12 pr-6 py-3.5 rounded-2xl border border-border bg-white font-black text-xs outline-none focus:border-gold transition-design"
-                                                />
-                                            </div>
-                                            <button
-                                                onClick={toggleBlockWholeDay}
-                                                className={`px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-design border ${dailySlotsForBlocking.every(time => blockedSlots.some(b => b.date === selectedBlockDate && b.time === time))
-                                                    ? 'bg-white border-gold text-gold hover:bg-gold/5'
-                                                    : 'bg-gold border-gold text-white shadow-gold hover:brightness-110'
-                                                    }`}
-                                            >
-                                                {dailySlotsForBlocking.every(time => blockedSlots.some(b => b.date === selectedBlockDate && b.time === time))
-                                                    ? TEXT.unblockDay : TEXT.blockDay}
-                                            </button>
-                                        </div>
-
-                                        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2.5">
-                                            {dailySlotsForBlocking.map((time) => {
-                                                const isBlocked = blockedSlots.some(b => b.date === selectedBlockDate && b.time === time);
-                                                return (
-                                                    <button
-                                                        key={time}
-                                                        onClick={() => toggleBlockSlot(time)}
-                                                        className={`py-2.5 px-1 rounded-xl border font-black text-[10px] transition-design ${isBlocked
-                                                            ? 'bg-red-50 border-red-200 text-red-600 shadow-sm'
-                                                            : 'bg-white border-border text-ink hover:border-gold/30'
-                                                            }`}
-                                                    >
-                                                        <div className="flex items-center justify-between px-1">
-                                                            <span>{time}</span>
-                                                            {isBlocked && <Ban size={8} />}
-                                                        </div>
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <DashboardSchedule 
+                                schedule={schedule}
+                                setSchedule={setSchedule}
+                                blockedSlots={blockedSlots}
+                                setBlockedSlots={setBlockedSlots}
+                                selectedBlockDate={selectedBlockDate}
+                                setSelectedBlockDate={setSelectedBlockDate}
+                                isSaving={isSaving}
+                                saveScheduleSettings={saveScheduleSettings}
+                                TEXT={TEXT}
+                                DAYS_EN={DAYS_EN}
+                                DAYS_MN={DAYS_MN}
+                                ALL_24_SLOTS={ALL_24_SLOTS}
+                                dailySlotsForBlocking={dailySlotsForBlocking}
+                                toggleWeeklySlot={toggleWeeklySlot}
+                                toggleBlockWholeDay={toggleBlockWholeDay}
+                                toggleBlockSlot={toggleBlockSlot}
+                            />
                         )}
 
-                        <div className="monastery-card p-10 bg-white/90 backdrop-blur-md">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6 border-b border-border pb-6">
-                                <h2 className="text-display flex items-center gap-4">
-                                    <History className="text-gold" /> {isMonk ? TEXT.ritualsClient : TEXT.ritualsMy}
-                                </h2>
-                                <div className="flex bg-stone/30 p-1.5 rounded-2xl border border-border/50">
-                                    <button
-                                        onClick={() => setActiveBookingTab('upcoming')}
-                                        className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-design ${activeBookingTab === 'upcoming' ? 'bg-gold text-white shadow-gold' : 'text-earth/60 hover:text-earth'}`}
-                                    >
-                                        Upcoming
-                                    </button>
-                                    <button
-                                        onClick={() => setActiveBookingTab('history')}
-                                        className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-design ${activeBookingTab === 'history' ? 'bg-gold text-white shadow-gold' : 'text-earth/60 hover:text-earth'}`}
-                                    >
-                                        History
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="space-y-5">
-                                {activeBookingTab === 'upcoming' ? (
-                                    upcomingBookings.length > 0 ? upcomingBookings.map((b) => {
-                                        const availability = checkRitualAvailability(b);
-                                        const isJoiningThis = joiningRoomId === b._id;
-
-                                        return (
-                                            <div key={b._id} className="p-6 rounded-[2rem] border border-border flex flex-col lg:flex-row lg:justify-between lg:items-center bg-stone/10 gap-6 transition-design hover:bg-stone/20 hover:border-gold/20 group">
-                                                <div
-                                                    className={`flex-1 ${!isMonk ? "cursor-pointer" : ""}`}
-                                                    onClick={() => {
-                                                        if (!isMonk) {
-                                                            router.push(`/${language}/monks/${b.monkId}`);
-                                                        }
-                                                    }}
-                                                >
-                                                    <div className="flex items-center gap-3 mb-2">
-                                                        <span className="text-label text-gold">{b.serviceName?.en || "Service"}</span>
-                                                        <div className="h-1 w-1 rounded-full bg-border" />
-                                                        <span className="text-[10px] font-black text-earth/40 uppercase tracking-widest">{b.date} • {b.time}</span>
-                                                    </div>
-                                                    <h4 className={`text-h2 text-ink ${!isMonk ? "group-hover:text-gold transition-colors" : ""}`}>
-                                                        {isMonk ? b.clientName : (allMonks.find(m => m._id === b.monkId)?.name?.[langKey] || "Monk")}
-                                                    </h4>
-                                                </div>
-                                                <div className="flex flex-wrap lg:flex-nowrap items-center gap-3">
-                                                    {b.status === 'confirmed' ? (
-                                                        <>
-                                                            <button
-                                                                onClick={async () => {
-                                                                    setActiveChatBooking(b);
-                                                                    if (isMonk && b.clientId) {
-                                                                        try {
-                                                                            const res = await fetch(`/api/users/${b.clientId}`);
-                                                                            if (res.ok) {
-                                                                                const userData = await res.json();
-                                                                                setChatClientInfo(userData);
-                                                                            }
-                                                                        } catch (e) {
-                                                                            console.error("Failed to fetch client info", e);
-                                                                        }
-                                                                    }
-                                                                }}
-                                                                className="flex-1 lg:flex-none px-6 py-3 bg-white text-ink border border-border rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-stone/20 transition-design"
-                                                            >
-                                                                <MessageCircle size={16} className="text-gold" /> {TEXT.chat}
-                                                            </button>
-
-                                                            {isMonk && (
-                                                                <button
-                                                                    onClick={async () => {
-                                                                        if (!confirm("Mark this ritual as completed? This will move it to history.")) return;
-                                                                        try {
-                                                                            const res = await fetch(`/api/bookings/${b._id}`, {
-                                                                                method: 'PATCH',
-                                                                                headers: { 'Content-Type': 'application/json' },
-                                                                                body: JSON.stringify({ status: 'completed', isManual: false })
-                                                                            });
-                                                                            if (res.ok) window.location.reload();
-                                                                        } catch (e) { console.error(e); }
-                                                                    }}
-                                                                    className="flex-1 lg:flex-none px-6 py-3 bg-ink text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:brightness-125 transition-design"
-                                                                >
-                                                                    Complete
-                                                                </button>
-                                                            )}
-                                                            {b.callStatus === 'active' ? (
-                                                                <button
-                                                                    onClick={() => {
-                                                                        setActiveBookingForRoom(b);
-                                                                        joinVideoCall(b);
-                                                                    }}
-                                                                    disabled={isJoiningThis}
-                                                                    className="flex-1 lg:flex-none px-6 py-3 bg-gold text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-lg shadow-gold/20 hover:brightness-110 transition-design disabled:opacity-70"
-                                                                >
-                                                                    {isJoiningThis ? <Loader2 className="animate-spin" size={16} /> : <div className="w-2.5 h-2.5 rounded-full bg-white animate-pulse" />}
-                                                                    <Video size={16} /> Join Video
-                                                                </button>
-                                                            ) : availability.isOpen ? (
-                                                                <button
-                                                                    onClick={() => {
-                                                                        setActiveBookingForRoom(b);
-                                                                        joinVideoCall(b);
-                                                                    }}
-                                                                    disabled={isJoiningThis}
-                                                                    className="flex-1 lg:flex-none px-6 py-3 bg-gold text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-gold hover:brightness-110 transition-design disabled:opacity-70"
-                                                                >
-                                                                    {isJoiningThis ? <Loader2 className="animate-spin" size={16} /> : <Video size={16} />}
-                                                                    {TEXT.enterRoom}
-                                                                </button>
-                                                            ) : (
-                                                                <div className="flex-1 lg:flex-none px-4 py-2 rounded-full border border-border bg-stone/10">
-                                                                    <span className="text-[9px] font-black uppercase text-earth/50">
-                                                                        {availability.message}
-                                                                    </span>
-                                                                </div>
-                                                            )}
-                                                        </>
-                                                    ) : <span className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border ${b.status === 'pending' ? 'bg-gold/5 text-gold border-gold/10' : 'bg-stone/10 text-earth border-border'}`}>
-                                                        {b.status === 'pending' ? TEXT.pending : b.status}
-                                                    </span>}
-                                                </div>
-                                            </div>
-                                        );
-                                    }) : (
-                                        <div className="text-center py-20 border-2 border-dashed border-border rounded-[2.5rem] opacity-40">
-                                            <p className="text-h2 font-serif italic text-earth">No scheduled rituals found.</p>
-                                        </div>
-                                    )
-                                ) : (
-                                    historyBookings.length > 0 ? historyBookings.map((b) => (
-                                        <div key={b._id} className="p-6 rounded-[2rem] border border-border flex flex-col lg:flex-row lg:justify-between lg:items-center bg-stone/5 gap-6 opacity-60 hover:opacity-100 transition-design">
-                                            <div
-                                                className={`flex-1 ${!isMonk ? "cursor-pointer" : ""}`}
-                                                onClick={() => {
-                                                    if (!isMonk) {
-                                                        router.push(`/${language}/monks/${b.monkId}`);
-                                                    }
-                                                }}
-                                            >
-                                                <div className="flex items-center gap-3 mb-2">
-                                                    <span className="text-label text-earth/40">{b.serviceName?.en || "Service"}</span>
-                                                    <div className="h-1 w-1 rounded-full bg-border" />
-                                                    <span className="text-[10px] font-black text-earth/20 uppercase tracking-widest">{b.date} • {b.time}</span>
-                                                </div>
-                                                <h4 className="text-h2 text-ink line-through opacity-50">
-                                                    {isMonk ? b.clientName : (allMonks.find(m => m._id === b.monkId)?.name?.[langKey] || "Monk")}
-                                                </h4>
-                                            </div>
-                                            <div className="flex items-center gap-3">
-                                                {isMonk && b.status === 'completed' && (
-                                                    <button
-                                                        onClick={async () => {
-                                                            if (!confirm("Re-open this session for further talk?")) return;
-                                                            try {
-                                                                const res = await fetch(`/api/bookings/${b._id}`, {
-                                                                    method: 'PATCH',
-                                                                    headers: { 'Content-Type': 'application/json' },
-                                                                    body: JSON.stringify({ status: 'confirmed', isManual: true })
-                                                                });
-                                                                if (res.ok) window.location.reload();
-                                                            } catch (e) { console.error(e); }
-                                                        }}
-                                                        className="px-6 py-2.5 bg-gold/10 text-gold rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gold hover:text-white transition-design"
-                                                    >
-                                                        Re-open Session
-                                                    </button>
-                                                )}
-                                                <span className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border ${b.status === 'completed' ? 'bg-success/5 text-success border-success/10' :
-                                                    b.status === 'rejected' ? 'bg-error/5 text-error border-error/10' :
-                                                        'bg-stone/10 text-earth border-border'
-                                                    }`}>
-                                                    {b.status}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    )) : <p className="text-stone-400 italic text-center py-6">No history yet.</p>
-                                )}
-                            </div>
-                        </div>
+                        <DashboardBookings 
+                            activeBookingTab={activeBookingTab}
+                            setActiveBookingTab={setActiveBookingTab}
+                            upcomingBookings={upcomingBookings}
+                            historyBookings={historyBookings}
+                            isMonk={isMonk}
+                            router={router}
+                            language={language}
+                            langKey={langKey}
+                            TEXT={TEXT}
+                            checkRitualAvailability={checkRitualAvailability}
+                            joiningRoomId={joiningRoomId}
+                            allMonks={allMonks}
+                            setActiveChatBooking={setActiveChatBooking}
+                            setChatClientInfo={setChatClientInfo}
+                            setActiveBookingForRoom={setActiveBookingForRoom}
+                            joinVideoCall={joinVideoCall}
+                        />
                     </div>
 
                     <div className="space-y-6">

@@ -13,9 +13,6 @@ import { NotificationProvider } from '@/contexts/NotificationContext'
 import { cookies } from 'next/headers'
 import { currentUser } from '@clerk/nextjs/server'
 import OfflineBanner from '../components/OfflineBanner'
-import { jwtVerify } from 'jose'
-import { connectToDatabase } from '@/database/db'
-import { ObjectId } from 'mongodb'
 
 const SplashScreen = dynamic(() => import('../components/SplashScreen'))
 
@@ -61,66 +58,9 @@ export default async function RootLayout({
   const validLocale = (['mn', 'en'].includes(locale) ? locale : 'mn') as any;
 
   let serverUser = null;
-  try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("auth_token")?.value;
-    const JWT_SECRET = process.env.JWT_SECRET;
-    // Run DB connection, JWT decode, and Clerk fetch in PARALLEL with 3s timeout
-    const [{ value: dbConn }, jwtResult, clerkResult] = await Promise.allSettled([
-      connectToDatabase(),
-      // JWT path
-      (async () => {
-        if (!token || !JWT_SECRET) return null;
-        try {
-          const { payload } = await jwtVerify(token, new TextEncoder().encode(JWT_SECRET));
-          if (!payload.sub) return null;
-          const { db } = await connectToDatabase();
-          return await db.collection("users").findOne({ _id: new ObjectId(payload.sub as string) });
-        } catch { return null; }
-      })(),
-      // Clerk path (with timeout)
-      Promise.race([
-        currentUser(),
-        new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000))
-      ])
-    ]) as any;
 
-    const db = dbConn?.db;
-    const jwtUser = jwtResult;
-    const clerkUser = clerkResult;
-
-    // Prefer JWT user (mobile), fall back to Clerk user (web)
-    if (jwtUser.status === 'fulfilled' && jwtUser.value) {
-      const u = jwtUser.value;
-      serverUser = { ...u, id: u._id.toString(), isAuthenticated: true };
-    } else if (clerkUser.status === 'fulfilled' && clerkUser.value) {
-      const clerk = clerkUser.value;
-      if (clerk) {
-        let dbUser: any = await db.collection("users").findOne(
-          { clerkId: clerk.id },
-          { projection: { _id:1, clerkId:1, role:1, name:1, image:1, avatar:1, firstName:1, lastName:1, email:1, fcmTokens:1, wishlist:1 } }
-        );
-        if (!dbUser) {
-          dbUser = {
-            clerkId: clerk.id,
-            email: clerk.emailAddresses[0]?.emailAddress,
-            firstName: clerk.firstName,
-            lastName: clerk.lastName,
-            avatar: clerk.imageUrl,
-            role: (clerk.unsafeMetadata?.role as string) || "client",
-          };
-          await db.collection("users").insertOne(dbUser);
-        }
-        serverUser = { ...dbUser, id: clerk.id, isAuthenticated: true };
-      }
-    }
-
-    if (serverUser) {
-      serverUser = JSON.parse(JSON.stringify(serverUser));
-    }
-  } catch (e) {
-    console.error("Layout SSR Auth Error", e);
-  }
+  // We rely on the client-side AuthContext calling /api/auth/me to properly hydrate user 
+  // and load complex MongoDB/JWT state without blocking Server Side Rendering (SSR) 
 
   return (
     <ClerkProvider>

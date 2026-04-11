@@ -6,10 +6,11 @@ import { deductInventory } from '@/app/lib/inventory';
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: Promise<{ invoiceId: string }> }
+    context: any
 ) {
     try {
-        const { invoiceId } = await params;
+        const params = await context.params;
+        const { invoiceId } = params;
 
         if (!invoiceId) {
             return NextResponse.json({ error: 'Missing invoiceId' }, { status: 400 });

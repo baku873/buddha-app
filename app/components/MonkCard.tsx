@@ -34,9 +34,8 @@ export default function MonkCard({ monk, index = 0, onClick }: MonkCardProps) {
 
     return (
         <motion.div
-            whileTap={{ scale: 0.97 }}
             onClick={onClick}
-            className="app-card-premium p-4 mb-4 flex gap-4 items-center cursor-pointer"
+            className="app-card-premium p-4 mb-4 flex gap-4 items-center cursor-pointer active:scale-[0.97] transition-transform"
         >
             {/* Avatar & Status */}
             <div className="relative w-20 h-20 flex-shrink-0">

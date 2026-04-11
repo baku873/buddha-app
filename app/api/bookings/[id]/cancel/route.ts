@@ -2,39 +2,18 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/database/db";
 import { ObjectId } from "mongodb";
 import { sendBookingCancellation } from "@/lib/mail";
-import { auth } from "@clerk/nextjs/server";
-import { cookies } from "next/headers";
-import { jwtVerify } from "jose";
+import { getAuthUser } from "@/lib/auth";
+import { invalidateCache } from "@/lib/api/cache";
 
-const JWT_SECRET = process.env.JWT_SECRET;
 export const dynamic = "force-dynamic";
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!JWT_SECRET) return NextResponse.json({ message: 'Server config error' }, { status: 500 });
-
   try {
-    // Authenticate
-    let authenticatedUserId: string | null = null;
-
-    const { userId: clerkUserId } = await auth();
-    authenticatedUserId = clerkUserId;
-
-    if (!authenticatedUserId) {
-      const cookieStore = await cookies();
-      const token = cookieStore.get("auth_token")?.value
-        || request.headers.get("Authorization")?.replace("Bearer ", "");
-      if (token) {
-        try {
-          const { payload } = await jwtVerify(token, new TextEncoder().encode(JWT_SECRET));
-          authenticatedUserId = payload.sub as string;
-        } catch { /* invalid token */ }
-      }
-    }
-
-    if (!authenticatedUserId) {
+    const user = await getAuthUser(request);
+    if (!user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
@@ -52,13 +31,13 @@ export async function PATCH(
     }
 
     // Authorization check — only the client or admin can cancel
-    const isClient = booking.clientId === authenticatedUserId;
-    const userOrConditions: any[] = [{ clerkId: authenticatedUserId }];
-    if (ObjectId.isValid(authenticatedUserId)) {
-      userOrConditions.push({ _id: new ObjectId(authenticatedUserId) });
+    const isClient = booking.clientId === user.id || booking.clientId === user.dbId;
+    const userOrConditions: any[] = [{ clerkId: user.id }];
+    if (ObjectId.isValid(user.dbId)) {
+      userOrConditions.push({ _id: new ObjectId(user.dbId) });
     }
-    const user = await db.collection("users").findOne({ $or: userOrConditions });
-    const isAdmin = user?.role === 'admin';
+    const dbUser = await db.collection("users").findOne({ $or: userOrConditions });
+    const isAdmin = dbUser?.role === 'admin';
 
     if (!isClient && !isAdmin) {
       return NextResponse.json({ message: "Зөвшөөрөлгүй" }, { status: 403 });
@@ -75,7 +54,7 @@ export async function PATCH(
     const bookingDateTime = new Date(year, month - 1, day, hours, minutes, 0, 0);
     const hoursUntilBooking = (bookingDateTime.getTime() - Date.now()) / (1000 * 60 * 60);
     const feeApplied = hoursUntilBooking < 24 && hoursUntilBooking > 0;
-    const feeAmount = feeApplied ? 10000 : 0; // 10,000₮ cancellation fee
+    const feeAmount = feeApplied ? 10000 : 0;
 
     // Update booking status
     await db.collection("bookings").updateOne(
@@ -84,7 +63,7 @@ export async function PATCH(
         $set: {
           status: 'cancelled',
           cancelledAt: new Date(),
-          cancelledBy: authenticatedUserId,
+          cancelledBy: user.dbId,
           feeApplied,
           feeAmount,
           updatedAt: new Date()
@@ -106,7 +85,6 @@ export async function PATCH(
       const monkName = monk?.name?.mn || monk?.name?.en || 'Лам';
       const serviceName = booking.serviceName?.mn || booking.serviceName?.en || 'Засал';
 
-      // To client
       if (booking.userEmail) {
         await sendBookingCancellation({
           to: booking.userEmail,
@@ -121,7 +99,6 @@ export async function PATCH(
         });
       }
 
-      // To monk
       if (monk?.email) {
         await sendBookingCancellation({
           to: monk.email,
@@ -154,6 +131,8 @@ export async function PATCH(
         createdAt: new Date()
       });
     } catch { /* ignore */ }
+
+    await invalidateCache('bookings:*');
 
     return NextResponse.json({
       success: true,

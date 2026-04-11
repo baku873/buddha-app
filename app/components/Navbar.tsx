@@ -43,7 +43,7 @@ export default function NativeNavbar() {
     setIsScrolled(latest > 10);
   });
 
-  if (!mounted) return null;
+  // Removed if (!mounted) return null; to allow static shell to render instantly during SSR
 
   const getIsActive = (href: string) => {
     const itemPath = href === '/' ? `/${lang}` : `/${lang}${href}`;
@@ -120,15 +120,19 @@ export default function NativeNavbar() {
             })}
           </div>
           <div className="flex items-center gap-4">
-            {user ? (
-              <div className="flex items-center gap-3 pl-3 border-l border-border">
-                <LocalizedLink href="/profile" className="text-xs font-black uppercase tracking-widest text-ink hover:text-gold transition-colors">
-                  {CONTENT.profile[lang]}
-                </LocalizedLink>
-                <UserButton />
-              </div>
+            {mounted ? (
+              user ? (
+                <div className="flex items-center gap-3 pl-3 border-l border-border">
+                  <LocalizedLink href="/profile" className="text-xs font-black uppercase tracking-widest text-ink hover:text-gold transition-colors">
+                    {CONTENT.profile[lang]}
+                  </LocalizedLink>
+                  <UserButton />
+                </div>
+              ) : (
+                <LocalizedLink href="/sign-in"><button className="btn-primary text-xs py-2.5 px-6">{CONTENT.login[lang]}</button></LocalizedLink>
+              )
             ) : (
-              <LocalizedLink href="/sign-in"><button className="btn-primary text-xs py-2.5 px-6">{CONTENT.login[lang]}</button></LocalizedLink>
+              <div className="w-24 h-10 bg-black/5 animate-pulse rounded-full" />
             )}
           </div>
         </nav>
@@ -152,16 +156,20 @@ export default function NativeNavbar() {
           <div className="flex items-center gap-4">
              <button className="text-earth/80 relative">
                <Bell size={22} strokeWidth={2} />
-               {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-error border border-white" />}
+               {mounted && unreadCount > 0 && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-error border border-white" />}
              </button>
-             {user ? (
-               <div className="scale-90"><UserButton /></div>
+             {mounted ? (
+               user ? (
+                 <div className="scale-90"><UserButton /></div>
+               ) : (
+                 <LocalizedLink href="/sign-in">
+                   <button className="bg-ink text-white rounded-full px-4 py-1.5 text-[10px] font-black uppercase tracking-widest">
+                      Орох
+                   </button>
+                 </LocalizedLink>
+               )
              ) : (
-               <LocalizedLink href="/sign-in">
-                 <button className="bg-ink text-white rounded-full px-4 py-1.5 text-[10px] font-black uppercase tracking-widest">
-                    Орох
-                 </button>
-               </LocalizedLink>
+                 <div className="w-16 h-8 bg-black/5 animate-pulse rounded-full" />
              )}
           </div>
         </header>

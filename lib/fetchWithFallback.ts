@@ -45,3 +45,29 @@ export async function fetchWithFallback<T>(
         throw new Error(errorMessage);
     }
 }
+
+export async function fetchWithSessionCache(url: string, ttlMins: number = 10): Promise<Response> {
+    if (typeof window === 'undefined') return fetch(url);
+    const cacheKey = `sess_cache_${url}`;
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+        try {
+            const { data, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp < ttlMins * 60 * 1000) {
+                return new Response(JSON.stringify(data), {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
+        } catch (e) {
+            sessionStorage.removeItem(cacheKey);
+        }
+    }
+    const req = await fetch(url);
+    if (req.ok) {
+        req.clone().json().then(data => {
+            sessionStorage.setItem(cacheKey, JSON.stringify({ data, timestamp: Date.now() }));
+        }).catch(err => console.error('Cache write error:', err));
+    }
+    return req;
+}

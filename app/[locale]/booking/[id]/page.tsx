@@ -32,34 +32,19 @@ interface Monk {
 
 // ─── Confetti Component ───────────────────────────────────────────────────────
 function Confetti() {
-  const colors = ["#D97706", "#059669", "#3B82F6", "#EC4899", "#8B5CF6", "#F59E0B"];
-  const pieces = Array.from({ length: 50 });
-  return (
-    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
-      {pieces.map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute w-2.5 h-2.5 rounded-sm"
-          style={{
-            background: colors[i % colors.length],
-            left: `${Math.random() * 100}%`,
-            top: "-10px",
-          }}
-          animate={{
-            y: ["0vh", "110vh"],
-            x: [0, (Math.random() - 0.5) * 200],
-            rotate: [0, Math.random() * 720 - 360],
-            opacity: [1, 1, 0],
-          }}
-          transition={{
-            duration: 2.5 + Math.random() * 2,
-            delay: Math.random() * 1.5,
-            ease: "easeIn",
-          }}
-        />
-      ))}
-    </div>
-  );
+  useEffect(() => {
+    import('canvas-confetti').then((module) => {
+      const confetti = module.default;
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ["#D97706", "#059669", "#3B82F6", "#EC4899", "#8B5CF6", "#F59E0B"],
+        disableForReducedMotion: true
+      });
+    });
+  }, []);
+  return null;
 }
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
@@ -99,9 +84,10 @@ export default function BookingPage() {
     (async () => {
       setLoading(true);
       try {
+        const { fetchWithSessionCache } = await import('@/lib/fetchWithFallback');
         const [mRes, sRes] = await Promise.all([
           fetch(`/api/monks/${monkId}`),
-          fetch(`/api/services?monkId=${monkId}`).catch(() => ({ ok: false } as any)),
+          fetchWithSessionCache(`/api/services?monkId=${monkId}`, 10).catch(() => ({ ok: false } as any)),
         ]);
         const mData: Monk = await mRes.json();
         setMonk(mData);

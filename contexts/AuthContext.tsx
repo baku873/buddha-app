@@ -29,12 +29,14 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children, initialUser }: { children: React.ReactNode, initialUser?: any }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [user, setUser] = useState<any | null>(initialUser || null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialUser); // If no initialUser, we are loading
   const { signOut } = useClerk();
   const { user: clerkUser, isLoaded: clerkLoaded } = useUser();
   const router = useRouter();
 
   const fetchUser = async () => {
+    // If not loaded from Clerk yet, don't execute full sync
+    if (!clerkLoaded) return;
     try {
       // 1. Try to load from cache first for instant UI response
       const cached = await getItem<any>(CACHE_KEYS.USER_PROFILE);
@@ -63,8 +65,10 @@ export const AuthProvider = ({ children, initialUser }: { children: React.ReactN
   };
 
   useEffect(() => {
-    fetchUser();
-  }, [clerkUser, clerkLoaded]); // Refetch if Clerk state changes
+    if (clerkLoaded) {
+      fetchUser();
+    }
+  }, [clerkUser?.id, clerkLoaded]); // Refetch if Clerk state changes
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const login = async (formData: any) => {

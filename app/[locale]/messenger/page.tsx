@@ -49,7 +49,7 @@ export default function MessengerPage() {
   const [allMonks, setAllMonks] = useState<MonkUser[]>([]);
   const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
   
-  const { messages, setMessages, isConnected, isFallbackMode, sendMessage } = useRealtimeMessages(
+  const { messages, setMessages, isConnected } = useRealtimeMessages(
     selectedConv?.otherId || null,
     user?._id || user?.id || null
   );
@@ -180,12 +180,11 @@ export default function MessengerPage() {
       if (res.ok) {
         const sentMsg = await res.json();
         
-        // Push WS message for realtime broadcasting
-        if (isConnected) {
-          sendMessage(sentMsg.text);
-        } else {
-          setMessages([...messages, sentMsg]);
-        }
+        // Add to local state immediately (recipient gets it via Ably)
+        setMessages(prev => {
+          if (prev.some(m => m._id === sentMsg._id)) return prev;
+          return [...prev, sentMsg];
+        });
         
         setNewMessage("");
         

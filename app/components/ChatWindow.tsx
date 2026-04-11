@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Send, Loader2, MessageSquare, Clock } from "lucide-react";
+import * as Ably from "ably";
 
 interface Message {
   _id: string;
@@ -34,6 +35,7 @@ export default function ChatWindow({
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const ablyClientRef = useRef<Ably.Realtime | null>(null);
 
   // Helper: Format time
   const formatTime = (dateString: string) => {
@@ -45,7 +47,6 @@ export default function ChatWindow({
   const getInitials = (name: string) => {
     if (!name) return "?";
     if (name.includes("+") || /^\d+$/.test(name.replace(/\s/g, ""))) {
-      // Looks like a phone number
       const digits = name.replace(/\D/g, "");
       return digits.slice(-2);
     }
@@ -57,9 +58,11 @@ export default function ChatWindow({
       .toUpperCase();
   };
 
-  // Poll for messages
+  // Fetch initial messages + subscribe to Ably for real-time updates
   useEffect(() => {
     let isMounted = true;
+
+    // 1. Load existing messages via HTTP
     const fetchMessages = async () => {
       try {
         const res = await fetch(`/api/chat?bookingId=${bookingId}`);
@@ -72,15 +75,37 @@ export default function ChatWindow({
         }
       } catch (error) {
         console.error("Error fetching messages:", error);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchMessages();
-    const interval = setInterval(fetchMessages, 3000);
+
+    // 2. Connect to Ably for real-time messages
+    const client = new Ably.Realtime({
+      authUrl: "/api/ably-token",
+      authMethod: "GET",
+    });
+
+    ablyClientRef.current = client;
+
+    const channel = client.channels.get(`booking-chat:${bookingId}`);
+    channel.subscribe("new_message", (msg: Ably.Message) => {
+      if (!isMounted) return;
+      const data = msg.data as Message;
+      setMessages((prev) => {
+        // Deduplicate by _id
+        const id = data._id?.toString();
+        if (id && prev.some((m) => m._id?.toString() === id)) return prev;
+        return [...prev, data];
+      });
+    });
 
     return () => {
       isMounted = false;
-      clearInterval(interval);
+      channel.unsubscribe();
+      client.close();
+      ablyClientRef.current = null;
     };
   }, [bookingId]);
 

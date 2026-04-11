@@ -2,60 +2,8 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/database/db";
 import { ObjectId } from "mongodb";
 import { sendBookingStatusUpdate } from "@/lib/mail";
-import { currentUser } from "@clerk/nextjs/server";
-import { cookies } from "next/headers";
-import { jwtVerify } from "jose";
-
-const JWT_SECRET = process.env.JWT_SECRET;
-
-// Helper to get authenticated user from Clerk or Custom JWT
-async function getAuthenticatedUser(request?: Request) {
-  // 1. Try Clerk
-  const clerkUser = await currentUser();
-  if (clerkUser) {
-    return {
-      id: clerkUser.id,
-      fullName: clerkUser.fullName,
-      role: clerkUser.publicMetadata.role as string,
-      isClerk: true
-    };
-  }
-
-  // 2. Try Custom JWT (Cookie OR Bearer token for mobile)
-  const cookieStore = await cookies();
-  const cookieToken = cookieStore.get("auth_token")?.value;
-
-  // Also check Bearer token in header (for mobile apps)
-  const authHeader = request?.headers.get("Authorization");
-  const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : null;
-
-  const token = cookieToken || bearerToken;
-
-  if (token) {
-    try {
-      const { payload } = await jwtVerify(token, new TextEncoder().encode(JWT_SECRET));
-      const { db } = await connectToDatabase();
-      const dbUser = await db.collection("users").findOne({ _id: new ObjectId(payload.sub as string) });
-
-      if (dbUser) {
-        return {
-          id: dbUser._id.toString(),
-          fullName: dbUser.firstName ? `${dbUser.firstName} ${dbUser.lastName || ''}`.trim() : (dbUser.phone || "User"),
-          role: dbUser.role,
-          isClerk: false
-        };
-      }
-    } catch (e) {
-      // Invalid token
-    }
-  }
-
-  return null;
-}
-
-type Props = {
-  params: Promise<{ id: string }>;
-};
+import { getAuthUser } from "@/lib/auth";
+import { invalidateCache } from "@/lib/api/cache";
 
 export async function PATCH(
   req: Request,
@@ -64,24 +12,24 @@ export async function PATCH(
   try {
     const params = await props.params;
     const { id } = params;
-    const { status, callStatus, isManual } = await req.json(); // status, callStatus, or isManual
+    const { status, callStatus, isManual } = await req.json();
 
-    const user = await getAuthenticatedUser(req);
+    const user = await getAuthUser(req);
     if (!user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     const { db } = await connectToDatabase();
 
-    // 1. Fetch the booking to check ownership
     const booking = await db.collection("bookings").findOne({ _id: new ObjectId(id) });
 
     if (!booking) {
       return NextResponse.json({ message: "Booking not found" }, { status: 404 });
     }
 
-    // 2. Authorization Check
-    const isClient = booking.clientId === user.id || booking.userId === user.id;
+    // Authorization Check
+    const isClient = booking.clientId === user.id || booking.userId === user.id
+      || booking.clientId === user.dbId || booking.userId === user.dbId;
     const isAdmin = user.role === "admin";
 
     let isMonk = false;
@@ -90,7 +38,7 @@ export async function PATCH(
     if (booking.monkId) {
       try {
         monkProfile = await db.collection("users").findOne({ _id: new ObjectId(booking.monkId) });
-        if (monkProfile && (monkProfile.clerkId === user.id || monkProfile._id.toString() === user.id)) {
+        if (monkProfile && (monkProfile.clerkId === user.id || monkProfile._id.toString() === user.dbId)) {
           isMonk = true;
         }
       } catch (e) {
@@ -109,12 +57,11 @@ export async function PATCH(
       }
     }
 
-    // 3. Update the Booking
+    // Update the Booking
     const updateData: any = { updatedAt: new Date() };
     if (status) updateData.status = status;
     if (isManual !== undefined) updateData.isManual = isManual;
     if (callStatus) {
-      // Only monks or admins can set callStatus to active
       if (callStatus === 'active' && !isMonk && !isAdmin) {
         return NextResponse.json({ message: "Only monks can start calls" }, { status: 403 });
       }
@@ -126,9 +73,8 @@ export async function PATCH(
       { $set: updateData }
     );
 
-    // 4. Send Notification Logic
+    // Send Notification Logic
     if (status === 'confirmed' || status === 'rejected') {
-      // Ensure we have monk profile for the name if not fetched yet (e.g. if admin did the action)
       if (!monkProfile && booking.monkId) {
         monkProfile = await db.collection("users").findOne({ _id: new ObjectId(booking.monkId) });
       }
@@ -156,18 +102,18 @@ export async function PATCH(
       try {
         const clientId = booking.clientId || booking.userId;
         if (clientId) {
-          const isMN = true; // Default to MN or detect from user prefs if available
+          const isMN = true;
           await db.collection("notifications").insertOne({
             userId: clientId,
-            title: status === 'confirmed' 
+            title: status === 'confirmed'
               ? { mn: "Захиалга баталгаажлаа", en: "Booking Confirmed" }
               : { mn: "Захиалга цуцлагдлаа", en: "Booking Rejected" },
             message: status === 'confirmed'
-              ? { 
+              ? {
                   mn: `${monkName} таны ${booking.date}-ны ${booking.time} цагийн захиалгыг баталгаажууллаа.`,
                   en: `${monkName} has confirmed your booking for ${booking.date} at ${booking.time}.`
                 }
-              : { 
+              : {
                   mn: `${monkName} таны захиалгыг цуцаллаа.`,
                   en: `${monkName} has rejected your booking request.`
                 },
@@ -196,6 +142,7 @@ export async function PATCH(
       }
     }
 
+    await invalidateCache('bookings:*');
     return NextResponse.json({ message: "Booking updated", success: true });
 
   } catch (error: any) {
@@ -204,8 +151,7 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(request: Request, props: Props) {
-  if (!JWT_SECRET) return NextResponse.json({message:'Server config error'},{status:500});
+export async function DELETE(request: Request, props: { params: Promise<{ id: string }> }) {
   try {
     const params = await props.params;
     const { id } = params;
@@ -214,7 +160,7 @@ export async function DELETE(request: Request, props: Props) {
       return NextResponse.json({ message: "Invalid Booking ID" }, { status: 400 });
     }
 
-    const user = await getAuthenticatedUser(request);
+    const user = await getAuthUser(request);
     if (!user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
@@ -226,14 +172,15 @@ export async function DELETE(request: Request, props: Props) {
       return NextResponse.json({ message: "Booking not found" }, { status: 404 });
     }
 
-    const isClient = booking.clientId === user.id || booking.userId === user.id;
+    const isClient = booking.clientId === user.id || booking.userId === user.id
+      || booking.clientId === user.dbId || booking.userId === user.dbId;
     const isAdmin = user.role === "admin";
 
     let isMonk = false;
     if (booking.monkId) {
       try {
         const monkProfile = await db.collection("users").findOne({ _id: new ObjectId(booking.monkId) });
-        if (monkProfile && (monkProfile.clerkId === user.id || monkProfile._id.toString() === user.id)) {
+        if (monkProfile && (monkProfile.clerkId === user.id || monkProfile._id.toString() === user.dbId)) {
           isMonk = true;
         }
       } catch (e) {
@@ -251,6 +198,7 @@ export async function DELETE(request: Request, props: Props) {
       return NextResponse.json({ message: "Booking not found" }, { status: 404 });
     }
 
+    await invalidateCache('bookings:*');
     return NextResponse.json({ message: "Booking deleted successfully" });
   } catch (error: any) {
     return NextResponse.json({ message: "Error deleting", error: error.message }, { status: 500 });

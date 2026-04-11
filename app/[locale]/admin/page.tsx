@@ -12,10 +12,12 @@ import {
 } from "lucide-react";
 import { formatDate } from "@/app/lib/dateUtils";
 import { useTheme } from "next-themes";
-import BookingDetailModal from "./BookingDetailModal";
-import MonkEditModal from "./MonkEditModal";
-import ServiceCreateModal from "./ServiceCreateModal";
-import UserEditModal from "./UserEditModal";
+import dynamic from "next/dynamic";
+
+const BookingDetailModal = dynamic(() => import('./BookingDetailModal'));
+const MonkEditModal = dynamic(() => import('./MonkEditModal'));
+const ServiceCreateModal = dynamic(() => import('./ServiceCreateModal'));
+const UserEditModal = dynamic(() => import('./UserEditModal'));
 import { useAuth } from "@/contexts/AuthContext";
 
 // --- TYPES ---

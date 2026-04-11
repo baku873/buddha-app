@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/database/db";
 import { ObjectId } from "mongodb";
 import { currentUser } from "@clerk/nextjs/server";
+import { invalidateCache } from "@/lib/api/cache";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -88,6 +89,8 @@ export async function POST(request: Request, props: Props) {
       { _id: new ObjectId(id) },
       { $set: { status: 'completed', updatedAt: new Date() } }
     );
+
+    await invalidateCache('bookings:*');
 
     return NextResponse.json({ success: true, message: "Booking completed, payment added, and chat history cleaned." });
 
