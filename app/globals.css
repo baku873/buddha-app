@@ -1,0 +1,1038 @@
+@import "tailwindcss";
+
+:root {
+    /* === CORE DESIGN SYSTEM (Minimal iOS for 40+ audience) === */
+    --ink: #1c1410;
+    /* Үндсэн текст, icon */
+    --gold: #d97706;
+    /* Primary CTA, accent */
+    --saffron: #ffd700;
+    /* Brighter saffron for contrast */
+    --cream: #ffffff;
+    /* Clean White for clarity */
+    --stone: #f5f3f0;
+    /* Secondary surface, skeleton */
+    --earth: #5a4d41;
+    /* High contrast muted text */
+    --border: #ebe6e0;
+    /* Dividers, borders */
+    --live: #d97706;
+    /* Online indicator mapped to gold */
+
+    /* === RADIUS === */
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 24px;
+    --radius-xl: 36px;
+    --radius-pill: 9999px;
+
+    /* === SHADOWS (Minimal & Soft) === */
+    --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.04);
+    --shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.12);
+    --shadow-gold: 0 10px 30px rgba(217, 119, 6, 0.2);
+
+    /* === SAFE AREA === */
+    --sat: env(safe-area-inset-top, 44px);
+    --sab: env(safe-area-inset-bottom, 34px);
+    --sal: env(safe-area-inset-left, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+
+    --header-height-mobile: 84px;
+    --header-height: 96px;
+    --tab-bar-height: 84px;
+}
+
+.app-card-premium {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@theme inline {
+    --color-ink: var(--ink);
+    --color-gold: var(--gold);
+    --color-saffron: var(--saffron);
+    --color-cream: var(--cream);
+    --color-stone: var(--stone);
+    --color-earth: var(--earth);
+    --color-border: var(--border);
+    --color-live: var(--live);
+
+    --font-sans:
+        "Inter", -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+    --font-display: "Playfair Display", "Merriweather", "Georgia", serif;
+
+    --radius-lg: var(--radius-lg);
+    --radius-md: var(--radius-md);
+    --radius-xl: var(--radius-xl);
+
+    --shadow-card: var(--shadow-card);
+    --shadow-gold: var(--shadow-gold);
+}
+
+/* --- BASE STYLES --- */
+html,
+body {
+    background-color: var(--cream);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+    overscroll-behavior: none; /* No rubber-band */
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Base tap highlight and touch action for interactive elements */
+a,
+button,
+[role="button"],
+input,
+select,
+textarea {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+/* --- TYPOGRAPHY (Larger & Clearer) --- */
+.text-display {
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--ink);
+}
+
+.text-h1 {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+}
+
+.text-h2 {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
+.text-body {
+    font-size: 17px; /* Larger for 40+ audience */
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--ink);
+}
+
+.text-secondary {
+    font-size: 15px;
+    color: var(--earth);
+    line-height: 1.5;
+}
+
+.text-label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--earth);
+}
+
+/* Mobile Top Header (iOS Status Bar Optimized) */
+.mobile-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(253, 251, 247, 0.88);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 0.5px solid rgba(28, 20, 16, 0.06);
+    padding-bottom: 12px;
+    padding-left: 16px;
+    padding-right: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    z-index: 50;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 4px;
+    /* Align with Logo bottom */
+}
+
+.lang-toggle {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--stone);
+    border: none;
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--ink);
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+}
+
+.lang-toggle:active {
+    opacity: 0.7;
+}
+
+/* Mobile Bottom Tab Bar (iOS Native Feel) */
+.mobile-tab-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(253, 251, 247, 0.88);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-top: 0.5px solid rgba(28, 20, 16, 0.08);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-around;
+    padding-top: 10px;
+    z-index: 50;
+}
+
+.tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    min-width: 60px;
+    padding: 4px 0;
+    text-decoration: none;
+    transition: opacity 0.2s;
+}
+
+.tab-item:active {
+    opacity: 0.7;
+}
+
+.tab-icon-wrap {
+    width: 40px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--earth);
+}
+
+.tab-icon-wrap.active {
+    background: rgba(217, 119, 6, 0.12);
+    color: var(--gold);
+    transform: scale(1.05);
+}
+
+.tab-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: var(--earth);
+    transition: color 0.2s;
+}
+
+.tab-label.active {
+    color: var(--gold);
+}
+
+.tab-active-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--gold);
+    margin-top: 1px;
+}
+
+/* Secondary — subtitle, description */
+.text-secondary {
+    font-size: 13px;
+    color: var(--earth);
+    line-height: 1.5;
+}
+
+/* Label — tag, badge, uppercase label */
+.text-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--earth);
+}
+
+/* Price — мөнгөн дүн */
+.text-price {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gold);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Hero white text (dark section дотор) */
+.text-hero-title {
+    font-size: 30px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+}
+
+/* --- LUMINOUS HERO BANNER (Minimal iOS Refinement) --- */
+
+.luminous-banner {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    min-height: 260px;
+    background: linear-gradient(135deg, #fffdf5 0%, #fdf4e3 100%);
+    border-radius: var(--radius-xl);
+    margin: 0 auto;
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border);
+}
+
+.luminous-content {
+    position: relative;
+    z-index: 5;
+    flex: 1;
+    padding: 32px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.luminous-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: var(--radius-pill);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    margin-bottom: 4px;
+}
+
+.luminous-status span {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--ink);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.luminous-title {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--ink);
+    line-height: 1.15;
+    margin: 0;
+    max-width: 360px;
+    letter-spacing: -0.02em;
+}
+
+.luminous-subtitle {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--earth);
+    max-width: 320px;
+}
+
+.luminous-buddha-wrap {
+    position: absolute;
+    top: 0;
+    right: -5%;
+    bottom: 0;
+    width: 70%;
+    z-index: 1;
+    overflow: hidden;
+    border-radius: var(--radius-xl);
+}
+
+.luminous-buddha-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.45;
+    filter: contrast(1.1) saturate(1.1) brightness(1.05) sepia(0.05);
+    transform: translateX(10px) scale(1.1);
+}
+
+.luminous-btn-sm {
+    background: #000000;
+    color: #ffffff;
+    border: none;
+    padding: 16px 36px;
+    border-radius: var(--radius-pill);
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.luminous-btn-sm:active {
+    transform: scale(0.96);
+}
+
+@media (max-width: 480px) {
+    .luminous-banner {
+        min-height: 240px;
+        border-radius: var(--radius-lg);
+    }
+    .luminous-content {
+        padding: 24px;
+    }
+    .luminous-title {
+        font-size: 24px;
+    }
+    .luminous-subtitle {
+        font-size: 14px;
+    }
+}
+
+/* ── APP SECTION ── */
+.app-section {
+    padding: 32px 0 16px;
+}
+
+.app-section-header {
+    padding: 0 20px 16px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+}
+
+.app-carousel {
+    display: flex;
+    gap: 16px;
+    padding: 0 20px 24px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+}
+
+.app-carousel > * {
+    scroll-snap-align: start;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.hs-see-all {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    text-transform: uppercase;
+}
+
+/* ── SECTION 1: Categories (GlassCard grid) ─────────────────── */
+.hs-categories-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.hs-glass-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 14px 6px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(217, 119, 6, 0.15);
+    border-radius: 18px;
+    box-shadow:
+        0 2px 8px rgba(28, 20, 16, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease;
+    cursor: pointer;
+}
+
+.hs-glass-card:active {
+    transform: scale(0.94);
+    box-shadow: 0 1px 4px rgba(28, 20, 16, 0.08);
+}
+
+.hs-cat-icon {
+    font-size: 26px;
+    line-height: 1;
+}
+
+.hs-cat-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-mid);
+    text-align: center;
+    letter-spacing: 0.02em;
+}
+
+/* ── SECTION 2: Featured Blog horizontal scroll ──────────────── */
+.hs-blog-scroll {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    /* hide scrollbar */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.hs-blog-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.hs-blog-card {
+    flex: 0 0 220px;
+    background: #fff;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px var(--border-glow);
+    /* soft golden glow effect */
+    text-decoration: none;
+    transition: transform 0.18s ease;
+    border: 1px solid rgba(217, 119, 6, 0.1);
+}
+
+.hs-blog-card:active {
+    transform: scale(0.96);
+}
+
+.hs-blog-img-wrap {
+    width: 100%;
+    height: 130px;
+    overflow: hidden;
+}
+
+.hs-blog-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+}
+
+.hs-blog-card:hover .hs-blog-img {
+    transform: scale(1.05);
+}
+
+.hs-blog-info {
+    padding: 10px 12px 12px;
+}
+
+.hs-blog-meta {
+    font-size: 10px;
+    color: var(--text-light);
+    font-weight: 600;
+    margin-bottom: 5px;
+    letter-spacing: 0.02em;
+}
+
+.hs-blog-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--gold);
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ── SECTION 3: Top Practitioners (AuraOrb list) ─────────────── */
+.hs-practitioners-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.hs-practitioner-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #fff;
+    border-radius: 20px;
+    padding: 14px;
+    box-shadow: 0 2px 12px rgba(28, 20, 16, 0.06);
+    border: 1px solid var(--border);
+    transition: transform 0.15s ease;
+}
+
+.hs-practitioner-card:active {
+    transform: scale(0.97);
+}
+
+/* AuraOrb */
+.hs-aura-orb {
+    position: relative;
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+}
+
+.hs-aura-ring {
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid rgba(217, 119, 6, 0.2);
+    transition: all 0.3s ease;
+}
+
+.hs-aura-ring.online {
+    border-color: rgba(217, 119, 6, 0.6);
+    box-shadow:
+        0 0 12px rgba(217, 119, 6, 0.25),
+        0 0 24px rgba(217, 119, 6, 0.1);
+    animation: aura-pulse 3s ease-in-out infinite;
+}
+
+@keyframes aura-pulse {
+    0%,
+    100% {
+        box-shadow:
+            0 0 10px rgba(217, 119, 6, 0.2),
+            0 0 20px rgba(217, 119, 6, 0.08);
+    }
+
+    50% {
+        box-shadow:
+            0 0 18px rgba(217, 119, 6, 0.4),
+            0 0 36px rgba(217, 119, 6, 0.15);
+    }
+}
+
+/* === SELECTION & SCROLLBAR === */
+::selection {
+    background: var(--gold);
+    color: #fff;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--earth);
+}
+
+/* === BANNER SHIMMER === */
+.banner-shimmer {
+    position: relative;
+    overflow: hidden;
+}
+
+.banner-shimmer::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+    );
+    transform: skewX(-20deg);
+    animation: banner-shimmer 3.5s infinite;
+}
+
+@keyframes banner-shimmer {
+    0% {
+        left: -150%;
+    }
+
+    100% {
+        left: 150%;
+    }
+}
+
+.hs-practitioner-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+}
+
+.hs-online-dot {
+    position: absolute;
+    bottom: 1px;
+    right: 1px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--live);
+    border: 2px solid #fff;
+}
+
+/* Info */
+.hs-practitioner-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.hs-practitioner-name {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--text-mid);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hs-practitioner-speciality {
+    font-size: 11px;
+    color: var(--text-light);
+    margin-top: 2px;
+}
+
+.hs-practitioner-rating {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin-top: 5px;
+}
+
+.hs-star {
+    color: #f59e0b;
+    font-size: 12px;
+}
+
+.hs-rating-num {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-mid);
+}
+
+.hs-review-count {
+    font-size: 10px;
+    color: var(--text-light);
+}
+
+/* Right column */
+.hs-practitioner-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.hs-practitioner-price {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--gold);
+    white-space: nowrap;
+}
+
+.hs-practitioner-price span {
+    font-size: 10px;
+    color: var(--text-light);
+    font-weight: 500;
+    margin-left: 1px;
+}
+
+/* Small book button override */
+.hs-book-btn {
+    padding: 7px 14px !important;
+    font-size: 10px !important;
+}
+
+/* === NATIVE APP SCROLL === */
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    overscroll-behavior-y: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* === PAGE SAFE AREA === */
+.page-safe-top {
+    padding-top: max(
+        calc(env(safe-area-inset-top, 0px) + var(--header-height-mobile, 84px)),
+        90px
+    );
+}
+
+.page-safe-bottom {
+    padding-bottom: max(calc(env(safe-area-inset-bottom, 0px) + 76px), 90px);
+}
+
+/* === NATIVE PRESS === */
+.press-effect {
+    transition:
+        transform 0.12s ease,
+        opacity 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.press-effect:active {
+    transform: scale(0.96);
+    opacity: 0.85;
+}
+
+/* === SCROLL HIDE === */
+.scroll-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.scroll-hide::-webkit-scrollbar {
+    display: none;
+}
+
+/* === STATUS BADGE === */
+.status-pending {
+    background: rgba(245, 158, 11, 0.1);
+    color: #92400e;
+}
+
+.status-confirmed {
+    background: rgba(16, 185, 129, 0.1);
+    color: #065f46;
+}
+
+.status-completed {
+    background: rgba(107, 114, 128, 0.1);
+    color: #374151;
+}
+
+.status-cancelled {
+    background: rgba(239, 68, 68, 0.1);
+    color: #7f1d1d;
+}
+
+.status-rejected {
+    background: rgba(239, 68, 68, 0.1);
+    color: #7f1d1d;
+}
+
+/* === SECTION LABEL === */
+.section-label {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 4px;
+}
+
+/* === CARD VARIANTS === */
+.card-white {
+    background: #fff;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+}
+
+.card-stone {
+    background: var(--stone);
+    border-radius: var(--radius-lg);
+}
+
+/* === FLOATING HEADER (iOS blur style) === */
+.ios-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(253, 251, 247, 0.92);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 0.5px solid rgba(28, 20, 16, 0.06);
+}
+
+/* === PILL TABS === */
+.pill-tabs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+}
+
+.pill-tab {
+    flex-shrink: 0;
+    padding: 6px 16px;
+    border-radius: var(--radius-pill);
+    font-size: 12px;
+    font-weight: 700;
+    transition: all 0.15s;
+    cursor: pointer;
+    border: none;
+}
+
+.pill-tab.active {
+    background: var(--ink);
+    color: #fff;
+}
+
+.pill-tab.inactive {
+    background: var(--stone);
+    color: var(--earth);
+}
+
+/* === MESSAGE BUBBLES === */
+.bubble-mine {
+    background: var(--gold);
+    color: #fff;
+    border-radius: 20px 20px 5px 20px;
+    padding: 10px 16px;
+    max-width: 75%;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.bubble-other {
+    background: var(--stone);
+    color: var(--ink);
+    border-radius: 20px 20px 20px 5px;
+    padding: 10px 16px;
+    max-width: 75%;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* === BOOKING STATUS CHIP === */
+.booking-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+/* === SHIMMER SKELETON === */
+@keyframes shimmer {
+    from {
+        background-position: -200% 0;
+    }
+
+    to {
+        background-position: 200% 0;
+    }
+}
+
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--stone) 25%,
+        var(--border) 50%,
+        var(--stone) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease infinite;
+}
+
+/* === AURA PULSE (online indicator) === */
+@keyframes aura-pulse {
+    0%,
+    100% {
+        box-shadow:
+            0 0 10px rgba(217, 119, 6, 0.2),
+            0 0 20px rgba(217, 119, 6, 0.08);
+    }
+
+    50% {
+        box-shadow:
+            0 0 18px rgba(217, 119, 6, 0.4),
+            0 0 36px rgba(217, 119, 6, 0.15);
+    }
+}
+
+/* === APP DESIGN UTILITIES (Mobile-Native Feel) === */
+.app-section {
+    padding: 32px 0 16px;
+    background: var(--cream);
+}
+
+.app-section-header {
+    margin-bottom: 12px;
+    padding: 0 20px;
+}
+
+.app-card-premium {
+    background: #fff;
+    border-radius: 32px;
+    border: 0.5px solid rgba(120, 104, 81, 0.08);
+    box-shadow: 0 4px 20px rgba(120, 104, 81, 0.03);
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.app-carousel {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 0px 20px 24px 20px;
+    margin: 0 -20px;
+    gap: 16px;
+}
+
+.app-carousel > * {
+    scroll-snap-align: center;
+    flex: 0 0 85%;
+}
+
+.hide-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
