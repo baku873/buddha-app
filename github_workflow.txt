@@ -1,0 +1,16 @@
+Act as an Expert DevOps and Mobile CI/CD Engineer.
+I need to set up a GitHub Actions workflow to automatically build an Android Release APK for the "Гэвалбал" app every time I push to the `main` branch.
+
+Please analyze the files in my current directory to determine my framework (Flutter, React Native, Expo, or Native Android) and generate the correct `.github/workflows/build-apk.yml` file.
+
+The workflow must include the following steps:
+1. Trigger: Run on `push` to the `main` branch and allow `workflow_dispatch` (manual trigger).
+2. Environment Setup: Set up Ubuntu-latest, checkout the repository, and set up the correct Java version (usually JDK 17).
+3. Framework Setup: Set up the necessary SDKs (e.g., Flutter SDK or Node.js/Yarn for React Native).
+4. Dependencies: Install all necessary project packages and dependencies.
+5. Build: Run the command to build an Android Release APK (e.g., `flutter build apk --release` or `./gradlew assembleRelease`).
+6. Upload Artifact: Use `actions/upload-artifact@v4` to upload the generated `.apk` file so I can easily download it from the GitHub Actions tab.
+
+Additionally, add clear YAML comments explaining how I can configure GitHub Secrets (KEYSTORE_BASE64, KEY_ALIAS, KEY_PASSWORD, STORE_PASSWORD) later when I am ready to cryptographically sign the APK for the Google Play Store.
+
+Output ONLY the raw YAML code for the workflow file, properly formatted.
