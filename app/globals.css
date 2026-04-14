@@ -2,27 +2,29 @@
 
 :root {
     /* === CORE DESIGN SYSTEM (Minimal iOS for 40+ audience) === */
-    --ink: #1c1410;
-    /* Үндсэн текст, icon */
-    --gold: #d97706;
-    /* Primary CTA, accent */
-    --saffron: #ffd700;
-    /* Brighter saffron for contrast */
-    --cream: #ffffff;
-    /* Clean White for clarity */
-    --stone: #f5f3f0;
-    /* Secondary surface, skeleton */
+    --ink: #0F2A4A;
+    /* Deep sapphire blue for primary text/icons */
+    --gold: #D4AF77;
+    /* Luxurious metallic gold */
+    --saffron: #D4AF77;
+    /* Replaced with gold */
+    --cream: #F8F4ED;
+    /* Warm cream background */
+    --stone: #f0ebe1;
+    /* Secondary surface */
     --earth: #5a4d41;
     /* High contrast muted text */
-    --border: #ebe6e0;
+    --border: #e6dfd3;
     /* Dividers, borders */
-    --live: #d97706;
+    --live: #D4AF77;
     /* Online indicator mapped to gold */
+    --teal: #319795;
+    /* Teal accent */
 
     /* === RADIUS === */
     --radius-sm: 10px;
     --radius-md: 14px;
-    --radius-lg: 24px;
+    --radius-lg: 28px;
     --radius-xl: 36px;
     --radius-pill: 9999px;
 

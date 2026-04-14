@@ -1,0 +1,29 @@
+Act as an Expert Full-Stack Mobile Developer (Frontend UI + Backend Integration).
+I need to add a premium Notification Dropdown UI and its underlying real-time logic to the "Гэвалбал" app.
+
+PART 1: UI/UX IMPLEMENTATION (The Dropdown Panel)
+Create a new custom component (e.g., `NotificationDropdown`) triggered by clicking the Bell icon in the top right. 
+Design Specs:
+- Positioning: Absolute/floating panel anchored to the top-right, slightly overlapping the AppBar.
+- Container: Cream background (#F8F4ED), 20px rounded corners, soft premium drop shadow (expensive feel).
+- Header: Text "Мэдэгдэл" in bold luxurious gold (#D4AF77).
+- List Items: Render a vertical list of dynamic notifications. Each item has:
+  - Left: Small circular icon (spiritual/status specific).
+  - Center: Main text (Deep sapphire blue #0F2A4A, elegant typography).
+  - Right: Timestamp (e.g., "2 мин", "1 цаг" in soft grey/teal).
+  - Bottom: Thin, subtle gold (#D4AF77) divider line between items.
+- Footer: Small teal link text "Бүгдийг харах" (See All) at the bottom.
+
+PART 2: STATE & REAL-TIME LOGIC (The Functional News/Updates)
+Create a `NotificationService` or state controller to handle incoming real-time events. Implement the logic for the following scenarios:
+1. Direct Messages: Listen for new messages. If a user receives a message, generate a notification: "[Sender Name] танд зурвас илгээлээ."
+2. Booking Status (User perspective): Listen for booking updates. If a monk accepts the booking, generate: "Таны захиалга амжилттай батлагдлаа."
+3. Booking Status (Monk perspective): Ensure the logic includes a trigger so that when a booking is confirmed, *both* the User and the Monk (Лам/Багш) receive a push notification on their respective devices.
+4. General News: Ability to receive broadcast news (e.g., "Шинэ мэдээ: Амар амгалангийн бясалгал").
+
+Deliverables:
+1. The UI Component code for the Notification Dropdown.
+2. The Service/State Management code handling the real-time websocket/database listeners (assume Firebase FCM or Supabase Realtime structure) to fetch "who just messaged" and "booking accepted" statuses.
+3. The server-side or cloud-function logic snippet required to send the dual push notification to BOTH the user and the monk when a booking is accepted.
+
+Integrate this smoothly with the existing codebase structure.

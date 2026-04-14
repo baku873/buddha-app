@@ -125,7 +125,9 @@ export async function PATCH(
 
           // TRIGGER PUSH NOTIFICATION
           try {
-            const { pushTriggers } = await import("@/lib/pushService");
+            const { pushTriggers, sendPushNotification } = await import("@/lib/pushService");
+            
+            // Notify User
             await pushTriggers.bookingUpdate(
               clientId.toString(),
               monkName,
@@ -133,6 +135,34 @@ export async function PATCH(
               booking.date,
               booking.time
             );
+
+            // Notify Monk
+            if (status === 'confirmed' && booking.monkId) {
+               // In-app notification for monk
+               await db.collection("notifications").insertOne({
+                 userId: booking.monkId,
+                 title: { mn: "Шинэ захиалга батлагдлаа", en: "New Booking Confirmed" },
+                 message: {
+                   mn: `Та ${booking.clientName || "Хэрэглэгч"}-н ${booking.date}-ны ${booking.time} цагийн захиалгыг баталлаа.`,
+                   en: `You confirmed a booking for ${booking.clientName || "User"} on ${booking.date} at ${booking.time}.`
+                 },
+                 type: "booking",
+                 read: false,
+                 link: `/${isMN ? 'mn' : 'en'}/profile`,
+                 createdAt: new Date()
+               });
+
+               // Push notification to monk
+               await sendPushNotification(booking.monkId.toString(), {
+                 title: "Шинэ захиалга батлагдлаа",
+                 body: `Та ${booking.clientName || "Хэрэглэгч"}-н ${booking.date}-ны ${booking.time} цагийн захиалгыг баталлаа.`,
+                 data: {
+                   type: "booking",
+                   bookingId: id,
+                   status
+                 }
+               });
+            }
           } catch (pushErr) {
             console.error("Push Notification recruitment failed:", pushErr);
           }

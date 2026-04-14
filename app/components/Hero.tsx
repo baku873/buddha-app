@@ -2,118 +2,100 @@
 
 import React from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { motion } from "framer-motion";
 import { useLanguage } from "../contexts/LanguageContext";
-import BlogCarousel from "./BlogCarousel";
-
-interface HeroBlog {
-  id: string;
-  title?: {
-    mn?: string;
-    en?: string;
-  };
-  content?: {
-    mn?: string;
-    en?: string;
-  };
-  date?: string;
-  authorName?: string;
-  cover?: string;
-  category?: string;
-}
+import { User, Star, CheckCircle } from "lucide-react";
 
 interface HeroProps {
-  blogs?: HeroBlog[];
+  blogs?: any[];
   locale: string;
 }
 
-export default function Hero({ blogs, locale }: HeroProps) {
+export default function Hero({ locale }: HeroProps) {
   const { t } = useLanguage();
 
   return (
-    <section className="hero-section">
-      {/* Content */}
-      <div className="hero-content">
-        <div className="w-full max-w-[800px] mx-auto mb-8 relative">
-          <BlogCarousel blogs={blogs || []} locale={locale} />
+    <section className="pt-24 pb-4 px-5 max-w-[800px] mx-auto">
+      {/* ── STAT CARDS ── */}
+      <div className="flex items-center justify-between bg-white border border-gold/20 rounded-[28px] shadow-[inset_0_0_20px_rgba(212,175,119,0.1),_0_4px_20px_rgba(0,0,0,0.04)] py-5 px-6 mb-8 relative overflow-hidden">
+        {/* Inner glow effect */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/60 to-transparent pointer-events-none rounded-[28px]" />
+        
+        <div className="flex-1 flex flex-col items-center justify-center gap-1.5 text-center relative z-10 border-r border-border last:border-r-0">
+          <div className="text-[22px] font-bold text-ink leading-none font-serif tracking-tight">
+            30+
+          </div>
+          <div className="text-[9px] font-bold text-earth uppercase tracking-widest whitespace-nowrap">
+            Багш нар
+          </div>
         </div>
 
-        {/* Statistic Chips - Unified Horizontal Bar */}
-        <div className="max-w-[800px] mx-auto mt-8 px-4">
-          <div className="flex items-center justify-between bg-white border border-border rounded-[24px] shadow-sm py-5 px-6 divide-x divide-border">
-            <div className="flex-1 flex flex-col items-center justify-center gap-1 text-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="10"
-                height="10"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="lucide lucide-user text-gold mb-1"
-              >
-                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-              <div className="text-[28px] font-black text-ink leading-none">
-                30+
-              </div>
-              <div className="text-[11px] font-medium text-earth uppercase tracking-widest">
-                {t({ mn: "Багш нар", en: "Mentors" })}
-              </div>
-            </div>
+        <div className="flex-1 flex flex-col items-center justify-center gap-1.5 text-center relative z-10 border-r border-border last:border-r-0">
+          <div className="text-[22px] font-bold text-ink leading-none font-serif tracking-tight">
+            5.0
+          </div>
+          <div className="text-[9px] font-bold text-earth uppercase tracking-widest whitespace-nowrap">
+            Үнэлгээ
+          </div>
+        </div>
 
-            <div className="flex-1 flex flex-col items-center justify-center gap-1 text-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="5"
-                height="5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="lucide lucide-star text-gold mb-1"
-              >
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
-              <div className="text-[28px] font-black text-ink leading-none">
-                5.0
-              </div>
-              <div className="text-[11px] font-medium text-earth uppercase tracking-widest">
-                {t({ mn: "Үнэлгээ", en: "Rating" })}
-              </div>
-            </div>
-
-            <div className="flex-1 flex flex-col items-center justify-center gap-1 text-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="5"
-                height="5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="lucide lucide-check-circle text-gold mb-1"
-              >
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                <polyline points="22 4 12 14.01 9 11.01" />
-              </svg>
-              <div className="text-[28px] font-black text-ink leading-none">
-                1200+
-              </div>
-              <div className="text-[11px] font-medium text-earth uppercase tracking-widest">
-                {t({ mn: "Засал", en: "Sessions" })}
-              </div>
-            </div>
+        <div className="flex-1 flex flex-col items-center justify-center gap-1.5 text-center relative z-10 border-r border-border last:border-r-0">
+          <div className="text-[22px] font-bold text-ink leading-none font-serif tracking-tight">
+            1200+
+          </div>
+          <div className="text-[9px] font-bold text-earth uppercase tracking-widest whitespace-nowrap">
+            Засал
           </div>
         </div>
       </div>
+
+      {/* ── HERO SECTION (Largest, Prominent) ── */}
+      <motion.div whileTap={{ scale: 0.98 }} className="w-full relative rounded-[28px] overflow-hidden shadow-2xl h-[480px]">
+        {/* Dramatic Dark Background with Particles */}
+        <div className="absolute inset-0 bg-ink" />
+        
+        {/* Golden Light Rays & Sparkles (simulated with CSS gradients) */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,119,0.3)_0%,transparent_70%)] mix-blend-screen" />
+        <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-10 mix-blend-overlay" />
+        
+        {/* Ethereal Portrait (Placeholder using high-quality image) */}
+        <img
+          src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=800"
+          alt="Ethereal Portrait"
+          className="absolute inset-0 w-full h-full object-cover opacity-80"
+          style={{ objectPosition: 'center 20%' }}
+        />
+
+        {/* Gradient Overlays for Text Readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/20 to-transparent" />
+        
+        {/* Top Content: "2026" & "ONLINE" */}
+        <div className="absolute top-6 left-6 right-6 flex items-start justify-between">
+          <h2 className="text-4xl font-serif italic font-black text-gold opacity-90 drop-shadow-lg tracking-tighter">
+            2026
+          </h2>
+          <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 shadow-[0_0_15px_rgba(212,175,119,0.3)]">
+            <span className="w-2 h-2 bg-gold rounded-full animate-pulse" />
+            <span className="text-[10px] font-bold text-white uppercase tracking-wider">Online</span>
+          </div>
+        </div>
+
+        {/* Bottom Content: Overlay Text & Button */}
+        <div className="absolute bottom-6 left-6 right-6 flex flex-col items-center text-center">
+          <h1 className="text-3xl font-serif font-black text-gold drop-shadow-md mb-1">
+            Буянцог Гэва
+          </h1>
+          <p className="text-[14px] text-white/90 font-medium tracking-[0.2em] uppercase mb-6">
+            Засалч
+          </p>
+          
+          <Link href={`/${locale}/monks`} className="w-full">
+            <button className="w-full max-w-[280px] mx-auto py-4 rounded-full bg-gradient-to-r from-gold/90 to-gold text-ink font-bold text-[14px] uppercase tracking-widest shadow-gold transition-transform hover:scale-105 backdrop-blur-sm border border-gold/50">
+              Дэлгэрэнгүй
+            </button>
+          </Link>
+        </div>
+      </motion.div>
     </section>
   );
 }

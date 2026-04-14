@@ -1,0 +1,32 @@
+Act as a Senior Mobile Backend Architect and Frontend Developer.
+I need to implement a strictly personalized, role-based notification system for the "Гэвалбал" app. 
+
+CRITICAL REQUIREMENT (DATA ISOLATION): 
+Users must ONLY receive and see their own notifications. A regular user must never see another user's data, and a monk must never see another monk's data. Queries must strictly filter by `recipientId == currentUser.id`.
+
+PART 1: ROLE-BASED NOTIFICATION LOGIC
+Implement the backend triggers and state management for two distinct user roles:
+
+ROLE A: Regular User (Хэрэглэгч)
+- Chat: When a monk messages them, trigger a notification showing EXACTLY who messaged them and a snippet of the latest info. 
+  (e.g., "[Багшийн нэр] танд зурвас илгээлээ: 'Сайн байна уу...'")
+- Bookings: When their specific booking request is accepted by the monk, trigger a notification.
+  (e.g., "Таны [Заслын нэр] захиалгыг [Багшийн нэр] батлагдлаа.")
+
+ROLE B: Monk / Provider (Лам / Засалч)
+- Chat: When a user messages them, trigger a notification showing the user's name and latest message.
+  (e.g., "[Хэрэглэгчийн нэр] танд зурвас илгээлээ: 'Маргааш цаг...'")
+- Bookings: When a user places a new order specifically for them, trigger a notification.
+  (e.g., "Танд[Хэрэглэгчийн нэр]-ээс шинэ захиалга ирлээ.")
+
+PART 2: BACKEND/DATABASE IMPLEMENTATION
+- Write the database schema or model (e.g., for Firebase/Supabase/PostgreSQL) for a `Notifications` table.
+- Include necessary Security Rules (e.g., Row Level Security in Supabase or Firestore Security Rules) to enforce that a client can only read rows where `recipient_id` matches their auth token.
+- Write the backend function/webhook that automatically generates these notifications when a `Message` is inserted or a `Booking` status changes.
+
+PART 3: FRONTEND UI INTEGRATION
+- Update the existing premium Notification Dropdown UI to fetch from this secure data stream.
+- The UI should dynamically display the sender's name (who messaged/who booked) and the dynamic status.
+- Ensure the realtime listener strictly uses the current user's ID and Role to filter the stream.
+
+Output the necessary backend security rules, database models, cloud function logic, and the updated UI component code.

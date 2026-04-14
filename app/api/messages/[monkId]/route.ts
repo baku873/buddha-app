@@ -76,6 +76,38 @@ export async function POST(request: Request, { params }: { params: Promise<{ mon
 
     await db.collection("direct_messages").insertOne(newMessage);
 
+    // IN-APP NOTIFICATION
+    try {
+      const isSenderMonk = user.role === "monk" || user.role === "admin";
+      
+      let titleMN = "";
+      let titleEN = "";
+      let messageMN = text || "Шинэ зураг илгээлээ";
+      let messageEN = text || "Sent a new image";
+
+      // If sender is monk, they are messaging a user
+      if (isSenderMonk) {
+        titleMN = `${senderName} багш танд зурвас илгээлээ`;
+        titleEN = `Monk ${senderName} sent you a message`;
+      } else {
+        // Sender is user, messaging a monk
+        titleMN = `${senderName} танд зурвас илгээлээ`;
+        titleEN = `${senderName} sent you a message`;
+      }
+
+      await db.collection("notifications").insertOne({
+        userId: receiverId,
+        title: { mn: titleMN, en: titleEN },
+        message: { mn: messageMN, en: messageEN },
+        type: "message",
+        read: false,
+        link: `/messenger`,
+        createdAt: new Date()
+      });
+    } catch (notifErr) {
+      console.error("Failed to create in-app notification:", notifErr);
+    }
+
     // Publish real-time event to recipient's Ably channel
     try {
       const channel = ablyRest.channels.get(`chat:${receiverId}`);

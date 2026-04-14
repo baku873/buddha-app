@@ -6,6 +6,8 @@ import { useAuth } from "./AuthContext";
 import type { Notification as DBNotification, Booking } from "@/database/types";
 import { fetchWithFallback } from "@/lib/fetchWithFallback";
 import { CACHE_KEYS } from "@/app/capacitor/storage/offlineStorage";
+import { PushNotifications } from '@capacitor/push-notifications';
+import { Capacitor } from '@capacitor/core';
 
 interface NotificationContextType {
   notifications: DBNotification[];
@@ -28,6 +30,26 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
   const [notifications, setNotifications] = useState<DBNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const trackedBookings = useRef<Set<string>>(new Set());
+
+  // Define how to handle incoming push notification
+  const handleForegroundPush = (notificationData: any) => {
+    const { title, body, data } = notificationData;
+    
+    // Check if we should create a local notification object to immediately show it in the dropdown
+    const newNotif: DBNotification = {
+      _id: `realtime-${Date.now()}`,
+      userId: user?.id || "",
+      title: { mn: title, en: title },
+      message: { mn: body, en: body },
+      type: data?.type || "system",
+      read: false,
+      createdAt: new Date(),
+    };
+
+    setNotifications((prev) => [newNotif, ...prev]);
+    setUnreadCount((prev) => prev + 1);
+    toast(title, { icon: '🔔', duration: 5000 });
+  };
 
   const fetchNotifications = async () => {
     if (!user?.id) return;
@@ -146,13 +168,28 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
     if (user) {
       fetchNotifications();
       
+      let pushListener: any = null;
+
+      // Register Capacitor PushNotifications listener for mobile
+      if (Capacitor.isNativePlatform()) {
+        PushNotifications.addListener('pushNotificationReceived', (notification) => {
+          handleForegroundPush({
+            title: notification.title || "Шинэ мэдэгдэл",
+            body: notification.body || "",
+            data: notification.data
+          });
+        }).then(listener => {
+          pushListener = listener;
+        }).catch(err => console.log("Push notifications listener error", err));
+      }
+
       // Consolidate into one 30s polling interval for both notifications and reminders
       const interval = setInterval(() => {
         fetchNotifications();
         checkUpcomingBookings();
       }, 30000);
       
-      // Request notification permission after 30s delay if still default
+      // Request notification permission after 30s delay if still default (for web)
       if (typeof window !== 'undefined' && "Notification" in window) {
         setTimeout(() => {
           if (window.Notification.permission === 'default') {
@@ -163,6 +200,9 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
 
       return () => {
         clearInterval(interval);
+        if (pushListener) {
+          pushListener.remove();
+        }
       };
     }
   }, [user]);

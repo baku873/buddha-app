@@ -85,16 +85,6 @@ export default async function Home({
         monks={allMonks}
         featuredMonks={featuredMonks}
       />
-      <Suspense
-        fallback={<div className="h-48 skeleton mx-5 my-6 rounded-2xl" />}
-      >
-        <PhilosophySection />
-      </Suspense>
-      <Suspense
-        fallback={<div className="h-48 skeleton mx-5 my-6 rounded-2xl" />}
-      >
-        <NirvanaComments />
-      </Suspense>
     </>
   );
 }

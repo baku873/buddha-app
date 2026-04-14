@@ -182,7 +182,7 @@ export interface Notification {
   userId: string;
   title: { mn: string; en: string };
   message: { mn: string; en: string };
-  type: "booking" | "reminder" | "system";
+  type: "booking" | "reminder" | "system" | "message";
   read: boolean;
   link?: string;
   createdAt: Date;

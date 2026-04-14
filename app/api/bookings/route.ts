@@ -176,6 +176,18 @@ export async function POST(request: Request) {
               type: "booking", read: false, createdAt: new Date()
             });
           }
+          if (monkId) {
+             const monkIdStr = typeof monkId === 'object' ? monkId.toString() : monkId;
+             await db.collection("notifications").insertOne({
+              userId: monkIdStr,
+              title: { mn: "Шинэ захиалга", en: "New Booking" },
+              message: { 
+                mn: `Танд ${userName || "Хэрэглэгч"}-ээс ${date}-ны ${time} цагт шинэ захиалга ирлээ.`, 
+                en: `You have a new booking from ${userName || "User"} on ${date} at ${time}.` 
+              },
+              type: "booking", read: false, createdAt: new Date()
+            });
+          }
         } catch (e) {}
       })()
     ]);
