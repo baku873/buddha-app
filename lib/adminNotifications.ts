@@ -31,7 +31,7 @@ export async function notifyAdminNewOrder(
           userId: admin._id.toString(),
           title: "🛒 Шинэ захиалга!",
           body: `${customerName} - ${total.toLocaleString()}₮`,
-          data: { url: "/admin/orders" },
+          data: { type: "booking", bookingId: orderId, url: "/admin/orders" },
         }).catch((err: unknown) => console.error("FCM admin push error:", err));
       }
 

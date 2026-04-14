@@ -60,6 +60,16 @@ async function createIndexes() {
             { name: 'idx_users_text_search' }
         );
 
+        // Required indexes for fast Monk profile lookup
+        await db.collection('users').createIndex(
+            { role: 1, _id: 1 }, 
+            { name: 'role_id_idx', background: true }
+        );
+        await db.collection('users').createIndex(
+            { clerkId: 1, role: 1 }, 
+            { name: 'clerkId_role_idx', background: true }
+        );
+
         console.log('✅ Users indexes created\n');
 
         // ==========================================
@@ -113,6 +123,16 @@ async function createIndexes() {
         await db.collection('bookings').createIndex(
             { status: 1, date: 1, time: 1 },
             { name: 'idx_bookings_cleanup' }
+        );
+
+        // Required indexes for fast Booking lookup by entity
+        await db.collection('bookings').createIndex(
+            { userId: 1, status: 1 }, 
+            { name: 'booking_user_idx', background: true }
+        );
+        await db.collection('bookings').createIndex(
+            { monkId: 1, status: 1 }, 
+            { name: 'booking_monk_idx', background: true }
         );
 
         console.log('✅ Bookings indexes created\n');

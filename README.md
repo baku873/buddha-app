@@ -35,3 +35,17 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 # buddha
+
+## Mobile Production Build (Android)
+
+To generate a production keystore for Google Play Store releases, use the following `keytool` command:
+
+```bash
+keytool -genkey -v -keystore release-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias my-key-alias
+```
+
+After generating the keystore, modify the following environment variables in your `.env` (or setup in your CI/CD workflow pipeline) to ensure a signed Play Store release bundle:
+- `ANDROID_KEYSTORE_PATH`
+- `ANDROID_KEYSTORE_ALIAS`
+- `ANDROID_KEYSTORE_PASSWORD`
+- `ANDROID_KEY_PASSWORD`

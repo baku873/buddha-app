@@ -4,7 +4,11 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { SecureStorage } from "@/app/capacitor/storage/secureStorage";
-import { getItem, setItem, CACHE_KEYS } from "@/app/capacitor/storage/offlineStorage";
+import {
+  getItem,
+  setItem,
+  CACHE_KEYS,
+} from "@/app/capacitor/storage/offlineStorage";
 
 interface AuthContextType {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -19,14 +23,20 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  login: async () => { },
-  logout: async () => { },
-  refreshUser: async () => { },
+  login: async () => {},
+  logout: async () => {},
+  refreshUser: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
 
-export const AuthProvider = ({ children, initialUser }: { children: React.ReactNode, initialUser?: any }) => {
+export const AuthProvider = ({
+  children,
+  initialUser,
+}: {
+  children: React.ReactNode;
+  initialUser?: any;
+}) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [user, setUser] = useState<any | null>(initialUser || null);
   const [loading, setLoading] = useState(!initialUser); // If no initialUser, we are loading
@@ -45,14 +55,17 @@ export const AuthProvider = ({ children, initialUser }: { children: React.ReactN
       }
 
       const token = await SecureStorage.getToken();
-      const headers: HeadersInit = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      
-      const res = await fetch("/api/auth/me", { headers });
+      const headers: HeadersInit = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      const res = await fetch("/api/auth/me", { 
+        headers,
+        credentials: "include",
+      });
       if (res.ok) {
         const data = await res.json();
         const freshUser = data.user;
-        
+
         // Update state and cache with TTL (5 minutes)
         setUser(freshUser);
         await setItem(CACHE_KEYS.USER_PROFILE, freshUser, { ttl: 300 });
@@ -78,10 +91,15 @@ export const AuthProvider = ({ children, initialUser }: { children: React.ReactN
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
+        credentials: "include",
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      if (!res.ok)
+        throw new Error(data.error || data.message || "Login failed");
+
+      // Small delay to ensure Set-Cookie header is committed by browser
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Refresh state
       await fetchUser();
@@ -96,16 +114,16 @@ export const AuthProvider = ({ children, initialUser }: { children: React.ReactN
     try {
       await Promise.all([
         fetch("/api/auth/logout", { method: "POST" }),
-        signOut()
+        signOut(),
       ]);
       await SecureStorage.removeToken();
       await setItem(CACHE_KEYS.USER_PROFILE, null); // Clear cache
 
       setUser(null);
-      
+
       // Attempt to extract lang code if we had it, but default fallback
-      const pathSegments = window.location.pathname.split('/');
-      const lang = pathSegments[1] === 'en' ? 'en' : 'mn';
+      const pathSegments = window.location.pathname.split("/");
+      const lang = pathSegments[1] === "en" ? "en" : "mn";
       router.push(`/${lang}/sign-in`);
     } catch (error) {
       console.error("Logout error", error);
@@ -115,7 +133,9 @@ export const AuthProvider = ({ children, initialUser }: { children: React.ReactN
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser: fetchUser }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, logout, refreshUser: fetchUser }}
+    >
       {children}
     </AuthContext.Provider>
   );

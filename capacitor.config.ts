@@ -1,6 +1,10 @@
 import { CapacitorConfig } from '@capacitor/cli';
+import { KeyboardResize, KeyboardStyle } from '@capacitor/keyboard';
 
-const isDev = process.env.NODE_ENV === 'development';
+// IMPORTANT: webContentsDebuggingEnabled MUST be false in 
+// App Store / Play Store builds. This is enforced by the 
+// CAPACITOR_BUILD check below.
+const isDev = process.env.NODE_ENV === 'development' && process.env.CAPACITOR_BUILD !== 'true';
 
 const config: CapacitorConfig = {
   appId: 'mn.gevabal.buddha',
@@ -8,7 +12,7 @@ const config: CapacitorConfig = {
   webDir: 'out',
 
   server: {
-    url: isDev ? 'http://192.168.8.15:3000' : 'https://gevabal.mn',
+    url: isDev ? 'http://192.168.8.15:3000' : undefined,
     cleartext: isDev,
     androidScheme: 'https',
     iosScheme: 'https',
@@ -56,8 +60,8 @@ const config: CapacitorConfig = {
     },
 
     Keyboard: {
-      resize: 'native',
-      style: 'LIGHT',
+      resize: KeyboardResize.Native,
+      style: KeyboardStyle.Light,
       resizeOnFullScreen: true,
     },
 

@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  output: process.env.CAPACITOR_BUILD === 'true' ? 'export' : undefined,
 
   // Allow cross-origin requests from 127.0.0.1 during local development
   allowedDevOrigins: ["http://127.0.0.1", "http://127.0.0.1:3000"],
@@ -21,6 +22,8 @@ const nextConfig: NextConfig = {
   trailingSlash: false,
   skipProxyUrlNormalize: true,
   images: {
+    dangerouslyAllowSVG: false,
+    unoptimized: process.env.CAPACITOR_BUILD === 'true',
     formats: ["image/avif", "image/webp"],
     // Device sizes optimized for common breakpoints
     deviceSizes: [640, 750, 828, 1080, 1200],
@@ -29,7 +32,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "i.pravatar.cc" },
       { protocol: "https", hostname: "images.unsplash.com" },
-      { protocol: "https", hostname: "res.cloudinary.com" },
+      { protocol: "https", hostname: "res.cloudinary.com", pathname: "/dc127wztz/**" },
       { protocol: "https", hostname: "img.clerk.com" },
     ],
   },
