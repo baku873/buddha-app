@@ -1,9 +1,26 @@
 import { Metadata, ResolvingMetadata } from 'next';
 import MonkProfileClient from './MonkProfileClient';
 
+export function generateStaticParams() {
+  return [
+    { locale: 'en', id: 'initial' },
+    { locale: 'mn', id: 'initial' },
+  ];
+}
+
 type Props = {
     params: Promise<{ id: string; locale: string }>
 };
+
+function SkeletonLoader() {
+    return (
+        <div className="min-h-[100svh] bg-cream px-5 pt-[calc(env(safe-area-inset-top,44px)+16px)] animate-pulse">
+            <div className="w-full h-40 bg-stone/20 rounded-2xl mb-4"></div>
+            <div className="w-2/3 h-8 bg-stone/20 rounded-xl mb-4"></div>
+            <div className="w-full h-20 bg-stone/20 rounded-2xl"></div>
+        </div>
+    );
+}
 
 export async function generateMetadata(
     { params }: Props,
@@ -11,6 +28,13 @@ export async function generateMetadata(
 ): Promise<Metadata> {
     const { id, locale } = await params;
     const validLocale = (['mn', 'en'].includes(locale) ? locale : 'mn') as 'mn' | 'en';
+
+    if (id === 'initial') {
+        return {
+            title: 'Loading...',
+            description: 'Loading profile...'
+        }
+    }
 
     // Fetch data - using absolute URL if needed or relative if internal API logic supports it
     // In Server Components, usually recommend calling DB directly or absolute URL
@@ -61,5 +85,8 @@ export default async function MonkPage({ params }: Props) {
     // We need to await params in Next.js 15+, or it's good practice anyway if it might be a promise
     // The type definition above says Promise
     const resolvedParams = await params;
+    if (resolvedParams.id === 'initial') {
+        return <SkeletonLoader />;
+    }
     return <MonkProfileClient />;
 }

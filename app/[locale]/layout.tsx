@@ -1,6 +1,6 @@
 // app/layout.tsx
 import { Playfair_Display, Lato } from 'next/font/google'
-import '../globals.css'
+import '@/app/globals.css'
 import { ClerkProvider } from '@clerk/nextjs'
 import { LanguageProvider } from '../contexts/LanguageContext'
 import { ThemeProvider } from 'next-themes'
@@ -90,11 +90,13 @@ export default async function RootLayout({
                 <NotificationProvider>
                   <Navbar />
                   <SplashScreen />
-                  <main className="w-full relative overflow-x-hidden" style={{
-                    paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 76px)'
-                  }}>
-                    {children}
-                  </main>
+                  <div className="premium-scroll w-full h-full">
+                    <main className="w-full relative overflow-x-hidden" style={{
+                      paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 76px)'
+                    }}>
+                      {children}
+                    </main>
+                  </div>
                 </NotificationProvider>
               </ThemeProvider>
             </body>

@@ -6,10 +6,30 @@ import { ArrowLeft, BookOpen } from "lucide-react";
 import DivineBackground from "@/app/components/DivineBackground";
 import BlogDetailClient from "@/app/components/BlogDetailClient";
 
-// Force dynamic rendering
-export const dynamic = 'force-dynamic';
+export function generateStaticParams() {
+  return [
+    { locale: 'en', id: 'initial' },
+    { locale: 'mn', id: 'initial' },
+  ];
+}
+
+function SkeletonLoader() {
+    return (
+        <div className="min-h-[100svh] bg-cream px-5 pt-[calc(env(safe-area-inset-top,44px)+16px)] animate-pulse">
+            <div className="w-full h-64 bg-stone/20 rounded-3xl mb-6"></div>
+            <div className="w-3/4 h-10 bg-stone/20 rounded-xl mb-4"></div>
+            <div className="w-1/2 h-6 bg-stone/20 rounded-xl mb-8"></div>
+            <div className="space-y-4">
+                <div className="w-full h-4 bg-stone/20 rounded"></div>
+                <div className="w-full h-4 bg-stone/20 rounded"></div>
+                <div className="w-5/6 h-4 bg-stone/20 rounded"></div>
+            </div>
+        </div>
+    );
+}
 
 async function getBlogPost(id: string) {
+    if (id === 'initial') return null;
     try {
         const { db } = await connectToDatabase();
         let post = await db.collection("blogs").findOne({ id: id });
@@ -26,6 +46,11 @@ async function getBlogPost(id: string) {
 
 export default async function BlogDetailPage(props: { params: Promise<{ id: string, locale: string }> }) {
     const params = await props.params;
+    
+    if (params.id === 'initial') {
+        return <SkeletonLoader />;
+    }
+
     const { id, locale: lang } = params;
     const post = await getBlogPost(id);
 

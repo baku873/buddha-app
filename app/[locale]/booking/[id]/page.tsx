@@ -8,6 +8,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
 import Image from "next/image";
 import QPay from "@/app/components/checkout/QPay";
+
+export function generateStaticParams() {
+  return [
+    { locale: 'en', id: 'initial' },
+    { locale: 'mn', id: 'initial' },
+  ];
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Service {
   _id: string;
@@ -52,6 +60,28 @@ function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`skeleton rounded-2xl ${className}`} />;
 }
 
+function SkeletonLoader() {
+  return (
+    <div className="min-h-[100svh] bg-cream px-5 pt-[calc(env(safe-area-inset-top,44px)+16px)]">
+      <div className="flex items-center gap-4 mb-8">
+        <Skeleton className="w-11 h-11" />
+        <div className="flex-1">
+          <Skeleton className="h-5 w-32 mb-2" />
+          <Skeleton className="h-3 w-48" />
+        </div>
+      </div>
+      <Skeleton className="h-6 w-40 mb-4" />
+      <div className="flex gap-3 overflow-hidden mb-8">
+        {[1, 2, 3].map(i => <Skeleton key={i} className="h-36 w-40 shrink-0" />)}
+      </div>
+      <Skeleton className="h-80 w-full mb-6" />
+      <div className="grid grid-cols-3 gap-3">
+        {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-16" />)}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function BookingPage() {
   const params = useParams();
@@ -81,6 +111,7 @@ export default function BookingPage() {
   // ── Fetch Monk + Services in parallel ──
    useEffect(() => {
     if (!monkId) return;
+    if (bookingId === 'initial') return;
     (async () => {
       setLoading(true);
       try {
@@ -125,6 +156,7 @@ export default function BookingPage() {
   // ── Fetch booked slots when date changes ──
   useEffect(() => {
     if (!monkId || !selectedDate) return;
+    if (bookingId === 'initial') return;
     setFetchingSlots(true);
     setSelectedTime(null);
     const dateStr = selectedDate.toISOString().split("T")[0];
@@ -133,7 +165,7 @@ export default function BookingPage() {
       .then(data => setBookedSlots(Array.isArray(data) ? data : []))
       .catch(() => setBookedSlots([]))
       .finally(() => setFetchingSlots(false));
-  }, [monkId, selectedDate]);
+  }, [monkId, selectedDate, bookingId]);
 
 
   // ── Calendar grid ──
@@ -240,6 +272,11 @@ export default function BookingPage() {
     const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`${svcName} — ${monkName}`)}&dates=${start}/${end}&details=${encodeURIComponent("Gevabal - Буддын духовн платформ")}`;
     window.open(url, "_blank");
   };
+
+  if (bookingId === 'initial') {
+    return <SkeletonLoader />;
+  }
+
   // ═══════════════════════════════════════════════════════════
 // QPAY PAYMENT SCREEN
     // ═══════════════════════════════════════════════════════════
@@ -353,25 +390,7 @@ export default function BookingPage() {
   // LOADING skeleton
   // ═══════════════════════════════════════════════════════════
   if (loading || !monk) {
-    return (
-      <div className="min-h-[100svh] bg-cream px-5 pt-[calc(env(safe-area-inset-top,44px)+16px)]">
-        <div className="flex items-center gap-4 mb-8">
-          <Skeleton className="w-11 h-11" />
-          <div className="flex-1">
-            <Skeleton className="h-5 w-32 mb-2" />
-            <Skeleton className="h-3 w-48" />
-          </div>
-        </div>
-        <Skeleton className="h-6 w-40 mb-4" />
-        <div className="flex gap-3 overflow-hidden mb-8">
-          {[1, 2, 3].map(i => <Skeleton key={i} className="h-36 w-40 shrink-0" />)}
-        </div>
-        <Skeleton className="h-80 w-full mb-6" />
-        <div className="grid grid-cols-3 gap-3">
-          {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-16" />)}
-        </div>
-      </div>
-    );
+    return <SkeletonLoader />;
   }
 
   const monkName = monk.name?.[lang as "mn" | "en"] || monk.name?.mn || "Багш";

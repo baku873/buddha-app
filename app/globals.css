@@ -787,8 +787,24 @@ html {
 }
 
 body {
-    overscroll-behavior-y: none;
-    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: bounce;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+.premium-scroll {
+    transform: translate3d(0,0,0);
+    padding-bottom: env(safe-area-inset-bottom);
+    -webkit-overflow-scrolling: touch !important;
+    scroll-behavior: smooth;
+    overscroll-behavior-y: bounce;
+    scrollbar-width: none;
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 100dvh;
+}
+
+.premium-scroll::-webkit-scrollbar {
+    display: none;
 }
 
 /* === PAGE SAFE AREA === */

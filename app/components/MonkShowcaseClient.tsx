@@ -149,7 +149,7 @@ export default function MonkShowcaseClient({
       )}
 
       <div className={hideHeader ? "px-0" : "px-5 pb-10 mt-6"}>
-        <AnimatePresence mode="popLayout">
+        <AnimatePresence mode="popLayout" layoutScroll={true}>
           {filteredMonks.length > 0 ? (
             <motion.div layout className="flex flex-col">
               {filteredMonks.map((monk, index) => (
