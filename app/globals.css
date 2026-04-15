@@ -1,37 +1,28 @@
 @import "tailwindcss";
 
 :root {
-    /* === CORE DESIGN SYSTEM (Minimal iOS for 40+ audience) === */
-    --ink: #0F2A4A;
-    /* Deep sapphire blue for primary text/icons */
-    --gold: #D4AF77;
-    /* Luxurious metallic gold */
-    --saffron: #D4AF77;
-    /* Replaced with gold */
-    --cream: #F8F4ED;
-    /* Warm cream background */
-    --stone: #f0ebe1;
-    /* Secondary surface */
-    --earth: #5a4d41;
-    /* High contrast muted text */
-    --border: #e6dfd3;
-    /* Dividers, borders */
-    --live: #D4AF77;
-    /* Online indicator mapped to gold */
-    --teal: #319795;
-    /* Teal accent */
+    /* === CORE DESIGN SYSTEM (Ethereal Premium for Spiritual Marketplace) === */
+    --ink: #333333; /* High-contrast dark grey (not pure black) */
+    --gold: #FFBF00; /* Golden Amber - primary focal points */
+    --saffron: #8B4513; /* Deep Saffron - accents and text hierarchy */
+    --cream: #F9F8F7; /* Bone White - heavenly gradients */
+    --stone: #FFFFFF; /* Soft Alabaster */
+    --earth: #555555; /* Secondary text */
+    --border: #E0F2FE; /* Morning Sky Blue for subtle glassmorphism/borders */
+    --live: #FFBF00; /* Online indicator mapped to Golden Amber */
+    --teal: #319795; /* Teal accent */
 
     /* === RADIUS === */
     --radius-sm: 10px;
     --radius-md: 14px;
-    --radius-lg: 28px;
+    --radius-lg: 24px; /* Soft and rounded buttons */
     --radius-xl: 36px;
     --radius-pill: 9999px;
 
-    /* === SHADOWS (Minimal & Soft) === */
-    --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.04);
-    --shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.12);
-    --shadow-gold: 0 10px 30px rgba(217, 119, 6, 0.2);
+    /* === SHADOWS (Ethereal Depth) === */
+    --shadow-card: 0 10px 40px rgba(0, 0, 0, 0.04);
+    --shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.08);
+    --shadow-gold: 0 10px 30px rgba(255, 191, 0, 0.2);
 
     /* === SAFE AREA === */
     --sat: env(safe-area-inset-top, 44px);

@@ -3,12 +3,12 @@
 ## App Store Guideline 3.1.3 Exemption
 This document serves as reference for our payment processing architecture, particularly regarding compliance with Apple's App Store Review Guidelines.
 
-### Physical/Real-World Services Exemption
-The Tibetan application utilizes QPay (a local Mongolian payment gateway) for transactions. We are utilizing a third-party payment gateway instead of Apple's In-App Purchase (IAP) system because the transactions strictly fall under the physical goods and services exemption.
+### Person-to-Person Experiences Exemption
+The Tibetan application utilizes QPay (a local Mongolian payment gateway) for transactions. We are utilizing a third-party payment gateway instead of Apple's In-App Purchase (IAP) system because the transactions strictly fall under the person-to-person experiences exemption.
 
-As per **App Store Review Guideline 3.1.3(e) Goods and Services Outside of the App**, apps that allow people to purchase physical goods or services that will be consumed outside of the app must use purchase methods other than in-app purchase.
+As per **App Store Review Guideline 3.1.3(d) Person-to-Person Experiences**, apps that offer real-time person-to-person services between two individuals (for example tutoring students, medical consultations, real estate tours, or fitness training) may use purchase methods other than in-app purchase to collect those payments.
 
-The payments processed in this application are for **live, real-world ritual sessions with monks**. The experience facilitated by the booking is synonymous with booking an in-person or live tele-service strictly classified as a real-world service out of the scope of digital content consumption.
+The payments processed in this application are for **live, real-time 1-on-1 person-to-person spiritual consultations with monks**. The experience facilitated by the booking is synonymous with booking a live tele-service strictly classified as a person-to-person experience out of the scope of digital content consumption. No recorded video content is available for purchase.
 
 ### Comparable Models
 Our booking and payment model is identical to platforms that exclusively broker real-world services, such as:

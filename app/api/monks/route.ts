@@ -42,8 +42,6 @@ const getMonksHandler = asyncHandler(async (request: Request) => {
             isSpecial: 1,
             specialties: 1,
             role: 1,
-            phone: 1,
-            email: 1,
             avatar: 1,
             firstName: 1,
             lastName: 1,

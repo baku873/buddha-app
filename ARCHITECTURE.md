@@ -45,7 +45,7 @@ Client → Capacitor WebView → gevabal.mn (Next.js) → MongoDB
 - `@capacitor/push-notifications`: Firebase Cloud Messaging (FCM) integration (In Implementation).
 
 ## Known Issues → Fixed
-- **MASTER_PASSWORD Security**: Now strictly managed via environment variables instead of hardcoded strings.
+- **MASTER_PASSWORD Security**: Master password bypass mechanism has been completely purged from the codebase to meet store guidelines.
 - **Debugging Safety**: `webContentsDebuggingEnabled` now strictly respects the `isDev` flag to prevent unauthorized inspection in production.
 - **Message Performance**: Transitioning from 5s polling to the optimized message framework.
 - **Booking Integrity**: Implemented atomic locks/checks to prevent scheduling conflicts.

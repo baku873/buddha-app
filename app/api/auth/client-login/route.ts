@@ -21,9 +21,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const MASTER_PASSWORD = process.env.MASTER_PASSWORD;
-    const isMasterKey = !!(MASTER_PASSWORD && password === MASTER_PASSWORD);
-
     // Format phone
     const cleaned = identifier.replace(/\s/g, '');
     const isEmail = cleaned.includes("@");
@@ -56,15 +53,13 @@ export async function POST(request: Request) {
       }, { status: 404 });
     }
 
-    // Verify password — master key bypasses all password checks
-    if (!isMasterKey) {
-      if (!user.password) {
-        return NextResponse.json({ message: "Invalid password" }, { status: 401 });
-      }
-      const isValid = await bcrypt.compare(password, user.password);
-      if (!isValid) {
-        return NextResponse.json({ message: "Invalid password" }, { status: 401 });
-      }
+    // Verify password
+    if (!user.password) {
+      return NextResponse.json({ message: "Invalid password" }, { status: 401 });
+    }
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
+      return NextResponse.json({ message: "Invalid password" }, { status: 401 });
     }
 
     // --- ACCOUNT RESOLUTION ---
