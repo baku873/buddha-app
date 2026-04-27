@@ -1,8 +1,11 @@
 import type { NextConfig } from "next";
 
+const isCapacitorBuild = process.env.CAPACITOR_BUILD === 'true';
+
 const nextConfig: NextConfig = {
   /* config options here */
-  output: process.env.CAPACITOR_BUILD === 'true' ? 'export' : undefined,
+  output: isCapacitorBuild ? 'export' : undefined,
+  distDir: isCapacitorBuild ? 'out' : undefined,
 
   // Allow cross-origin requests from 127.0.0.1 during local development
   allowedDevOrigins: ["http://127.0.0.1", "http://127.0.0.1:3000"],
@@ -19,7 +22,7 @@ const nextConfig: NextConfig = {
 
   reactStrictMode: true,
   skipTrailingSlashRedirect: true,
-  trailingSlash: false,
+  trailingSlash: isCapacitorBuild ? true : false,
   skipProxyUrlNormalize: true,
   images: {
     dangerouslyAllowSVG: false,

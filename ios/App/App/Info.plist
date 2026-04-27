@@ -30,7 +30,7 @@
 	<string>Main</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>armv7</string>
+		<string>arm64</string>
 	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
@@ -55,7 +55,9 @@
 	<string>Профайл зурагт галлерейгаас зураг сонгоно</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Профайл зургийг галлерейд хадгалахад ашиглана</string>
-	<key>NSUserNotificationUsageDescription</key>
-	<string>Used to receive notifications about upcoming sessions and updates</string>
+	<key>WKAppBoundDomains</key>
+	<array>
+		<string>gevabal.mn</string>
+	</array>
 </dict>
 </plist>
