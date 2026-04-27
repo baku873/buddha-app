@@ -13,3 +13,5 @@ ios/App/build/
 ios/App/DerivedData/
 *.zip
 create_zip.py
+.env
+.env.local

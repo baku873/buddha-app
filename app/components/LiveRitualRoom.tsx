@@ -10,6 +10,7 @@ import "@livekit/components-styles";
 import BookViewer from "./BookViewer";
 import { X, BookOpen } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
+import { apiUrl } from '@/lib/apiUrl';
 
 interface Props {
   token: string;
@@ -33,7 +34,7 @@ export default function LiveRitualRoom({ token, serverUrl, roomName, onLeave, is
           clearInterval(timer);
           // Auto-complete booking to delete chat history
           if (bookingId) {
-            fetch(`/api/bookings/${bookingId}/complete`, { method: 'POST' })
+            fetch(apiUrl(`/api/bookings/${bookingId}/complete`), { method: 'POST' })
               .then(() => console.log('Session auto-completed and chat deleted'))
               .catch(err => console.error('Auto-complete failed:', err));
           }

@@ -1,5 +1,6 @@
 import { PushNotifications } from '@capacitor/push-notifications';
 import { Capacitor } from '@capacitor/core';
+import { apiUrl } from '@/lib/apiUrl';
 
 /**
  * Initializes Capacitor Push Notifications and sets up listeners.
@@ -31,7 +32,7 @@ export async function initPushNotifications(userId: string, router: any) {
     
     // Update the user profile with the new FCM token
     try {
-      await fetch('/api/users/profile', {
+      await fetch(apiUrl('/api/users/profile'), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fcmToken: token.value })

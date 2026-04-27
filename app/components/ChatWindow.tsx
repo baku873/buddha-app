@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Send, Loader2, MessageSquare, Clock } from "lucide-react";
 import * as Ably from "ably";
+import { apiUrl } from '@/lib/apiUrl';
 
 interface Message {
   _id: string;
@@ -65,7 +66,7 @@ export default function ChatWindow({
     // 1. Load existing messages via HTTP
     const fetchMessages = async () => {
       try {
-        const res = await fetch(`/api/chat?bookingId=${bookingId}`);
+        const res = await fetch(apiUrl(`/api/chat?bookingId=${bookingId}`));
         if (res.ok) {
           const data = await res.json();
           if (isMounted) {

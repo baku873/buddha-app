@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import toast from "react-hot-toast";
 import { openExternalLink } from "@/lib/openExternalLink";
+import { apiUrl } from '@/lib/apiUrl';
 
 interface QPayProps {
   orderId: string;
@@ -88,7 +89,7 @@ export default function QPay({ orderId, amount, onSuccess }: QPayProps) {
   const checkStatus = async (invoiceId: string, silent = false) => {
     if (!silent) setChecking(true);
     try {
-      const res = await fetch(`/api/payment/qpay/check/${invoiceId}`);
+      const res = await fetch(apiUrl(`/api/payment/qpay/check/${invoiceId}`));
       const data = await res.json();
 
       if (data.paid) {
