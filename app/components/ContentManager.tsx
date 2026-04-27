@@ -1,5 +1,7 @@
 "use client";
 
+import { apiUrl } from '@/lib/apiUrl';
+
 import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, BookOpen, Loader2, Image as ImageIcon, X, Pen } from "lucide-react";
@@ -50,7 +52,7 @@ export default function ContentManager({ blogs }: ContentManagerProps) {
         if (!confirm("Delete this blog post?")) return;
         setLoading(true);
         try {
-            await fetch("/api/admin/content", {
+            await fetch(apiUrl("/api/admin/content"), {
                 method: "DELETE",
                 body: JSON.stringify({ id, type: "blog" })
             });
@@ -81,7 +83,7 @@ export default function ContentManager({ blogs }: ContentManagerProps) {
                 ? { ...formData, id: editId, type: "blog" }
                 : { ...formData, type: "blog" };
 
-            const res = await fetch("/api/admin/content", {
+            const res = await fetch(apiUrl("/api/admin/content"), {
                 method: method,
                 body: JSON.stringify(body)
             });

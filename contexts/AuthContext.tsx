@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import { apiUrl } from '@/lib/apiUrl';
 import { SecureStorage } from "@/app/capacitor/storage/secureStorage";
 import {
   getItem,
@@ -58,7 +59,7 @@ export const AuthProvider = ({
       const headers: HeadersInit = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const res = await fetch("/api/auth/me", { 
+      const res = await fetch(apiUrl("/api/auth/me"), { 
         headers,
         credentials: "include",
       });
@@ -87,7 +88,7 @@ export const AuthProvider = ({
   const login = async (formData: any) => {
     // This is for CUSTOM DB login
     try {
-      const res = await fetch("/api/auth/client-login", {
+      const res = await fetch(apiUrl("/api/auth/client-login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -113,7 +114,7 @@ export const AuthProvider = ({
     setLoading(true);
     try {
       await Promise.all([
-        fetch("/api/auth/logout", { method: "POST" }),
+        fetch(apiUrl("/api/auth/logout"), { method: "POST" }),
         signOut(),
       ]);
       await SecureStorage.removeToken();

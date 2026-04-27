@@ -1,5 +1,7 @@
 "use client";
 
+import { apiUrl } from '@/lib/apiUrl';
+
 import React, { useState, useEffect, useMemo } from "react";
 import { Search, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -35,7 +37,7 @@ export default function MonkShowcaseClient({
         }
 
         // 2. Fetch fresh data in the background
-        const res = await fetch("/api/monks");
+        const res = await fetch(apiUrl("/api/monks"));
         if (res.ok) {
           const freshData = await res.json();
           setMonks(freshData);
@@ -149,7 +151,7 @@ export default function MonkShowcaseClient({
       )}
 
       <div className={hideHeader ? "px-0" : "px-5 pb-10 mt-6"}>
-        <AnimatePresence mode="popLayout" layoutScroll={true}>
+        <AnimatePresence mode="popLayout">
           {filteredMonks.length > 0 ? (
             <motion.div layout className="flex flex-col">
               {filteredMonks.map((monk, index) => (

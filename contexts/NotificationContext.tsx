@@ -1,5 +1,7 @@
 "use client";
 
+import { apiUrl } from '@/lib/apiUrl';
+
 import React, { createContext, useContext, useEffect, useState, useRef } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "./AuthContext";
@@ -70,7 +72,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
 
   const markAsRead = async (id?: string, all?: boolean) => {
     try {
-      const res = await fetch("/api/user/notifications", {
+      const res = await fetch(apiUrl("/api/user/notifications"), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ notificationId: id, all }),

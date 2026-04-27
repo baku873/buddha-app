@@ -78,7 +78,91 @@ if (action === 'remove') {
                     content = content.replace(dynamicRegex, '// CAP_DISABLE: $1');
                     changed = true;
                 }
+
+                // 1b. Comment out server-only imports that break static export
+                const serverOnlyImports = [
+                    /@clerk\/nextjs\/server/,
+                    /next\/headers/,
+                ];
+                serverOnlyImports.forEach(pattern => {
+                    const importRegex = new RegExp(`^(\\s*import\\s+.*${pattern.source}.*)$`, 'gm');
+                    if (importRegex.test(content)) {
+                        content = content.replace(importRegex, '// CAP_DISABLE: $1');
+                        changed = true;
+                    }
+                });
+
+                // 1c. Convert layout.tsx to client component for Capacitor static export.
+                // @clerk/nextjs ClerkProvider uses server actions internally — incompatible with output: export.
+                // The native app uses custom JWT auth (AuthContext), so we remove Clerk entirely.
+                if (filePath.endsWith('layout.tsx') && filePath.includes('[locale]') && !filePath.includes('monk')) {
+                    // Add "use client" if not present
+                    if (!content.includes('"use client"') && !content.includes("'use client'")) {
+                        content = '"use client";\n' + content;
+                        changed = true;
+                    }
+                    // Remove ClerkProvider import and JSX tags (native app uses AuthContext, not Clerk)
+                    content = content.replace(/import\s+\{[^}]*\}\s+from\s+['"]@clerk\/nextjs['"];?\n?/g, '');
+                    content = content.replace(/<ClerkProvider[^>]*>/g, '');
+                    content = content.replace(/<\/ClerkProvider>/g, '');
+                    // Remove `export const metadata` block (not allowed in client components)
+                    // Use brace counting to handle nested objects
+                    const metaStart = content.indexOf('export const metadata');
+                    if (metaStart !== -1) {
+                        let braceCount = 0;
+                        let i = content.indexOf('{', metaStart);
+                        for (; i < content.length; i++) {
+                            if (content[i] === '{') braceCount++;
+                            if (content[i] === '}') braceCount--;
+                            if (braceCount === 0) {
+                                let metaEnd = i + 1;
+                                while (metaEnd < content.length && /[;\s]/.test(content[metaEnd])) metaEnd++;
+                                content = content.substring(0, metaStart) + content.substring(metaEnd);
+                                break;
+                            }
+                        }
+                    }
+                    // Convert `async function` to regular function (no await in client components)
+                    content = content.replace(/export\s+default\s+async\s+function/g, 'export default function');
+                    // Replace `await params` with direct access
+                    content = content.replace(/const\s*\{\s*locale\s*\}\s*=\s*await\s+params;/, 
+                        "const { locale: localeParam } = (typeof params === 'object' && params !== null && 'then' in params) ? { locale: 'mn' } : (params as { locale: string });\n  const locale = localeParam;");
+                    changed = true;
+                }
+
+                // 1d. Replace server-only pages (pages that use server APIs like currentUser + connectToDatabase)
+                //     with placeholder client components — they can't work in a static app.
+                const isClientComponent = content.includes('"use client"') || content.includes("'use client'");
+                const isServerOnlyPage = filePath.endsWith('page.tsx') &&
+                    !isClientComponent &&
+                    (originalContent.includes('connectToDatabase') || originalContent.includes('currentUser()'));
                 
+                if (isServerOnlyPage) {
+                    // Build generateStaticParams for any dynamic segments in the path
+                    let dyns = [];
+                    const parts = filePath.split(path.sep);
+                    parts.forEach(s => {
+                        let match = s.match(/\[(.*?)\]/);
+                        if (match) dyns.push(match[match.length - 1]);
+                    });
+                    let paramsMn = { locale: "mn" };
+                    let paramsEn = { locale: "en" };
+                    dyns.forEach(param => {
+                        if (param !== 'locale') {
+                            paramsMn[param] = "capacitor";
+                            paramsEn[param] = "capacitor";
+                        }
+                    });
+
+                    const placeholderContent = `// CAP_PLACEHOLDER: server-only page replaced for static export\nexport function generateStaticParams() {\n  return [\n    ${JSON.stringify(paramsMn)},\n    ${JSON.stringify(paramsEn)}\n  ];\n}\n\nexport default function CapPlaceholder() {\n  return <div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh"}}><p>This page is not available in the app.</p></div>;\n}\n`;
+                    const backupPath = filePath + '.cap_bak';
+                    fs.writeFileSync(backupPath, originalContent, 'utf-8');
+                    fs.writeFileSync(filePath, placeholderContent, 'utf-8');
+                    modified++;
+                    console.log(`[Capacitor] Replaced server-only page with placeholder: ${filePath}`);
+                    return; // Skip further processing
+                }
+
                 // 2. Inject generateStaticParams safely for `output: export`
                 const isPageOrLayout = filePath.endsWith('page.tsx') || filePath.endsWith('layout.tsx');
                 
@@ -86,7 +170,6 @@ if (action === 'remove') {
                 if (isPageOrLayout && filePath.includes('[')) {
                     // Check if it already has generateStaticParams or is a client component
                     const hasGenerateStaticParams = content.includes('generateStaticParams');
-                    const isClientComponent = content.includes('"use client"') || content.includes("'use client'");
                     
                     if (!hasGenerateStaticParams && !isClientComponent) {
                         let dyns = [];
@@ -115,6 +198,43 @@ if (action === 'remove') {
                         
                         content += injectedCode;
                         changed = true;
+                    } else if (!hasGenerateStaticParams && isClientComponent && filePath.endsWith('page.tsx')) {
+                        // Next.js 16+: client components cannot export generateStaticParams.
+                        // Create a server-component wrapper that imports the client page.
+                        const dir = path.dirname(filePath);
+                        const clientPath = path.join(dir, '_CapClientPage.tsx');
+
+                        // Extract dynamic params from the file path
+                        let dyns = [];
+                        const parts = filePath.split(path.sep);
+                        parts.forEach(s => {
+                            let match = s.match(/\[(.*?)\]/);
+                            if (match) dyns.push(match[match.length - 1]);
+                        });
+
+                        let paramsMn = { locale: "mn" };
+                        let paramsEn = { locale: "en" };
+                        dyns.forEach(param => {
+                            if (param !== 'locale') {
+                                paramsMn[param] = "capacitor";
+                                paramsEn[param] = "capacitor";
+                            }
+                        });
+
+                        // 1. Copy original client component to _CapClientPage.tsx
+                        fs.writeFileSync(clientPath, content, 'utf-8');
+
+                        // 2. Create thin server wrapper as the new page.tsx
+                        const wrapperContent = `// --- CAP_GENERATED_WRAPPER (do not edit manually) ---\nimport { Suspense } from 'react';\nimport ClientPage from './_CapClientPage';\n\nexport function generateStaticParams() {\n  return [\n    ${JSON.stringify(paramsMn)},\n    ${JSON.stringify(paramsEn)}\n  ];\n}\n\nexport default function Page() {\n  return <Suspense fallback={<div style={{minHeight:"100vh"}} />}><ClientPage /></Suspense>;\n}\n`;
+
+                        // 3. Backup original and overwrite with wrapper
+                        const backupPath = filePath + '.cap_bak';
+                        fs.writeFileSync(backupPath, originalContent, 'utf-8');
+                        fs.writeFileSync(filePath, wrapperContent, 'utf-8');
+                        modified++;
+                        console.log(`[Capacitor] Created server wrapper for client page: ${filePath}`);
+                        // Skip further processing — we already backed up and wrote
+                        return;
                     }
                 }
                 
@@ -153,6 +273,15 @@ if (action === 'remove') {
                     restored++;
                 } catch (e) {
                     console.error(`[Capacitor] Failed to restore ${originalPath} from backup:`, e.message);
+                }
+            }
+            // Clean up _CapClientPage.tsx wrapper artifacts
+            if (filePath.endsWith('_CapClientPage.tsx')) {
+                try {
+                    fs.rmSync(filePath);
+                    console.log(`[Capacitor] Cleaned up wrapper artifact: ${filePath}`);
+                } catch (e) {
+                    console.error(`[Capacitor] Failed to clean up ${filePath}:`, e.message);
                 }
             }
         });

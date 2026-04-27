@@ -3,7 +3,6 @@
 	"appName": "Gevabal",
 	"webDir": "out",
 	"server": {
-		"url": "https://gevabal.mn",
 		"cleartext": false,
 		"androidScheme": "https",
 		"iosScheme": "https"
@@ -20,15 +19,15 @@
 	},
 	"plugins": {
 		"SplashScreen": {
-			"launchShowDuration": 2000,
+			"launchShowDuration": 1000,
 			"launchAutoHide": true,
-			"backgroundColor": "#FAFAF9",
+			"backgroundColor": "#F9F8F7",
 			"androidSplashResourceName": "splash",
 			"androidScaleType": "CENTER_CROP",
 			"showSpinner": false,
 			"androidSpinnerStyle": "large",
-			"iosSpinnerStyle": "small",
-			"spinnerColor": "#D97706",
+			"iosSpinnerStyle": "large",
+			"spinnerColor": "#FFBF00",
 			"splashFullScreen": true,
 			"splashImmersive": true
 		},

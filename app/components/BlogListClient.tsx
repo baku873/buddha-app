@@ -154,7 +154,7 @@ export default function BlogListClient({ initialPosts }: { initialPosts: BlogPos
 
             {/* Grid */}
             <main className="px-6 flex-1 mt-4">
-                <AnimatePresence mode="wait" layoutScroll={true}>
+                <AnimatePresence mode="wait">
                     {filteredPosts.length > 0 ? (
                         <motion.div 
                             key={`${filter}-${search}`}

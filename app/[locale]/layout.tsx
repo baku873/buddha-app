@@ -10,8 +10,8 @@ import SmoothScroll from '../components/SmoothScroll'
 import Navbar from '../components/Navbar'
 import CapacitorInitWrapper from '../capacitor/CapacitorInitWrapper'
 import { NotificationProvider } from '@/contexts/NotificationContext'
-import { cookies } from 'next/headers'
-import { currentUser } from '@clerk/nextjs/server'
+// import { cookies } from 'next/headers' // Server-only: not used in render
+// import { currentUser } from '@clerk/nextjs/server' // Server-only: not used in render
 import OfflineBanner from '../components/OfflineBanner'
 
 const SplashScreen = dynamic(() => import('../components/SplashScreen'))

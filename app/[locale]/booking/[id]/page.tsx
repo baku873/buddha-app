@@ -9,13 +9,6 @@ import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "
 import Image from "next/image";
 import QPay from "@/app/components/checkout/QPay";
 
-export function generateStaticParams() {
-  return [
-    { locale: 'en', id: 'initial' },
-    { locale: 'mn', id: 'initial' },
-  ];
-}
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Service {
   _id: string;

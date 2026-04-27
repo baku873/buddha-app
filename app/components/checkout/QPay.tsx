@@ -55,7 +55,7 @@ export default function QPay({ orderId, amount, onSuccess }: QPayProps) {
 
   const initiatePayment = async () => {
     try {
-      const res = await fetch("/api/payment/qpay/create", {
+      const res = await fetch(apiUrl("/api/payment/qpay/create"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

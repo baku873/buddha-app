@@ -11,6 +11,12 @@ def is_excluded(path):
         if path.startswith(b + '/') or path == b:
             return True
 
+    # Never include secret/env files
+    env_excluded = ['.env', '.env.local', '.env.production', '.env.development']
+    basename = path.split('/')[-1]
+    if basename in env_excluded:
+        return True
+
     # Heavy/generated exclusions for android and ios
     heavy_excluded = [
         'android/.gradle',

@@ -53,6 +53,17 @@ const nextConfig: NextConfig = {
         asyncFunction: true,
       };
     }
+    // Capacitor builds: replace @clerk/nextjs with no-op shim to avoid server actions
+    if (isCapacitorBuild) {
+      const shimPath = require('path').resolve(__dirname, 'lib/clerk-cap-shim.tsx');
+      const serverShimPath = require('path').resolve(__dirname, 'lib/clerk-cap-server-shim.ts');
+      config.resolve = config.resolve || {};
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        '@clerk/nextjs/server': serverShimPath,
+        '@clerk/nextjs': shimPath,
+      };
+    }
     return config;
   },
 };
